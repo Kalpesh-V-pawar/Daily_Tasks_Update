@@ -1,20 +1,22 @@
 import sys
-sys.path.append(r'C:\users\kalpe\appData\roaming\python\python312\site-packages')
 from flask import Flask, request, jsonify, render_template_string
 from pymongo import MongoClient
-from datetime import datetime
-import uuid
+
+# Add the path to your Python packages
+sys.path.append(r'C:\users\kalpe\appData\roaming\python\python312\site-packages')
 
 app = Flask(__name__)
 
 # MongoDB Atlas connection string
 client = MongoClient("mongodb+srv://Kalpeshpawar:01042001@cluster0.s0fmo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client['dailyTasks']  # Specify the database name
+task_collection = db['tasks']  # Specify the collection name
 
-
- HTML_TEMPLATE = """
-
- <html>
- <head>
+# Embedded HTML template
+HTML_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Task Recorder</title>
@@ -45,8 +47,8 @@ client = MongoClient("mongodb+srv://Kalpeshpawar:01042001@cluster0.s0fmo.mongodb
             background-color: #0056b3;
         }
     </style>
- </head>
- <body>
+</head>
+<body>
     <h1>What did you do today?</h1>
     <form id="taskForm">
         <label for="date">Date:</label>
@@ -72,15 +74,13 @@ client = MongoClient("mongodb+srv://Kalpeshpawar:01042001@cluster0.s0fmo.mongodb
             alert(result.message);
         });
     </script>
- </body>
- </html>
- """
-
+</body>
+</html>
+"""
 
 @app.route("/")
 def home():
     return render_template_string(HTML_TEMPLATE)
-
 
 # API to Save Task
 @app.route('/save-task', methods=['POST'])
@@ -92,9 +92,8 @@ def save_task():
     if not date or not tasks:
         return jsonify({'message': 'Invalid input'}), 400
 
-    task_collection = mongo.db.tasks
+    # Check if the task already exists for the given date
     existing_task = task_collection.find_one({'date': date})
-
     if existing_task:
         task_collection.update_one({'date': date}, {'$set': {'tasks': tasks}})
         return jsonify({'message': 'Task updated successfully'})
