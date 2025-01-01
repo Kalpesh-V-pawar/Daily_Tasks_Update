@@ -1,3 +1,5 @@
+import sys
+sys.path.append(r'C:\users\kalpe\appData\roaming\python\python312\site-packages')
 from flask import Flask, request, jsonify, render_template_string
 from flask_pymongo import PyMongo
 from datetime import datetime
@@ -72,6 +74,11 @@ HTML_TEMPLATE = """
     </script>
 </body>
 </html>"""
+
+
+@app.route("/")
+def home():
+    return render_template_string(HTML_TEMPLATE)
 
 
 # API to Save Task
