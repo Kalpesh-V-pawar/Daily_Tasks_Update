@@ -1,5 +1,3 @@
-import sys
-sys.path.append(r'C:\users\kalpe\appData\roaming\python\python312\site-packages')
 from flask import Flask, request, jsonify, render_template_string
 from flask_pymongo import PyMongo
 from datetime import datetime
