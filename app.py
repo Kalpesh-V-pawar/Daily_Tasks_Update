@@ -8,11 +8,11 @@ import uuid
 app.config["MONGO_URI"] = "mongodb+srv://Kalpeshpawar:01042001@cluster0.s0fmo.mongodb.net/dailyTasks?retryWrites=true&w=majority"
 mongo = PyMongo(app)
 
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return render_template("index.html")  # Serve the HTML file
+    return send_from_directory(".", "index.html")  # Serve index.html from project root
 
 
 # API to Save Task
