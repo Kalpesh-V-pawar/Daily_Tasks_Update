@@ -8,7 +8,7 @@ import uuid
 app = Flask(__name__)
 
 # MongoDB Atlas connection string
-client = MongoClient("mongodb+srv://Kalpeshpawar:01042001@cluster0.ozahk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient("mongodb+srv://Kalpeshpawar:01042001@cluster0.s0fmo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 
 # Select your database and collection
 db = client["inventory_db"]
