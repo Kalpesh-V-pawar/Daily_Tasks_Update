@@ -1,105 +1,411 @@
 import sys
 sys.path.append(r'C:\users\kalpe\appData\roaming\python\python312\site-packages')
 from flask import Flask, request, jsonify, render_template_string
-from flask_pymongo import PyMongo
+from pymongo import MongoClient
 from datetime import datetime
 import uuid
 
 app = Flask(__name__)
 
-# MongoDB Configuration
-app.config["MONGO_URI"] = "mongodb+srv://Kalpeshpawar:01042001@cluster0.s0fmo.mongodb.net/dailyTasks?retryWrites=true&w=majority"
-mongo = PyMongo(app)
+# MongoDB Atlas connection string
+client = MongoClient("mongodb+srv://Kalpeshpawar:01042001@cluster0.ozahk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Task Recorder</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            text-align: center;
-        }
-        label, textarea, input {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <h1>What did you do today?</h1>
-    <form id="taskForm">
-        <label for="date">Date:</label>
-        <input type="date" id="date" name="date" required><br>
-        <label for="tasks">Tasks:</label><br>
-        <textarea id="tasks" name="tasks" rows="4" required></textarea><br>
-        <button type="submit">Save</button>
-    </form>
+# Select your database and collection
+db = client["inventory_db"]
+inventory_collection = db["inventory"]
+transactions_collection = db["transactions"]
 
-    <script>
-        document.getElementById('taskForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const date = document.getElementById('date').value;
-            const tasks = document.getElementById('tasks').value;
-            const response = await fetch('/save-task', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ date, tasks }),
+# Updated form HTML with reason field
+form_html = '''
+    <html>
+    <head>
+        <style>
+            body {
+                font-family: 'Roboto', sans-serif;
+                background: linear-gradient(135deg, #6e7fd5, #b8c1ec);
+                margin: 0;
+                padding: 0;
+                color: #333;
+            }
+            .container {
+                max-width: 800px;
+                margin: 50px auto;
+                background-color: #f4f4f4;
+                border-radius: 10px;
+                padding: 40px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                text-align: center;
+                font-size: 2.5rem;
+                margin-bottom: 30px;
+                color: #4a4a4a;
+            }
+            form {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            label {
+                font-size: 18px;
+                color: #555;
+            }
+            input[type="text"], input[type="number"], select {
+                padding: 10px;
+                width: 100%;
+                max-width: 350px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+                background-color: #fff;
+                color: #333;
+                font-size: 16px;
+                outline: none;
+                transition: border-color 0.3s ease-in-out;
+            }
+            input[type="text"]:focus, input[type="number"]:focus, select:focus {
+                border-color: #4CAF50;
+            }
+            input[type="submit"] {
+                background-color: #4CAF50;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                border-radius: 5px;
+                font-size: 18px;
+                cursor: pointer;
+                transition: background-color 0.3s ease-in-out;
+            }
+            input[type="submit"]:hover {
+                background-color: #45a049;
+            }
+            a {
+                text-decoration: none;
+                color: #4CAF50;
+                text-align: center;
+                display: block;
+                margin-top: 20px;
+                font-size: 18px;
+                transition: color 0.3s ease-in-out;
+            }
+            a:hover {
+                color: #fff;
+            }
+            .field-group {
+                width: 100%;
+                max-width: 350px;
+                margin-bottom: 15px;
+            }
+            select {
+                width: 100%;
+                padding: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Stock Record Chatbot</h1>
+            <form method="POST" action="/add">
+                <div class="field-group">
+                    <label for="item_name">Item Name:</label>
+                    <input type="text" id="item_name" name="item_name" required>
+                </div>
+                
+                <div class="field-group">
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" name="quantity" required>
+                </div>
+                
+                <div class="field-group">
+                    <label for="reason">Reason:</label>
+                    <select id="reason" name="reason" required>
+                        <option value="">Select a reason</option>
+                        <option value="New stock arrival">New stock arrival</option>
+                        <option value="Restocking">Restocking</option>
+                        <option value="Inventory correction">Inventory correction</option>
+                        <option value="Damaged goods replacement">Damaged goods replacement</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="field-group" id="other-reason-group" style="display: none;">
+                    <label for="other_reason">Specify Other Reason:</label>
+                    <input type="text" id="other_reason" name="other_reason">
+                </div>
+                
+                <input type="submit" value="Add Item">
+            </form>
+            <p>Use the form above to add inventory. You can also check inventory status via Postman or cURL.</p>
+            <p>For example: <a href="/check?item_name=XYZ">/check?item_name=XYZ</a></p>
+            <br><br>
+            <h2>Inventory List</h2>
+            <a href="/inventory">View All Inventory</a>
+        </div>
+        
+        <script>
+            document.getElementById('reason').addEventListener('change', function() {
+                var otherReasonGroup = document.getElementById('other-reason-group');
+                if (this.value === 'Other') {
+                    otherReasonGroup.style.display = 'block';
+                } else {
+                    otherReasonGroup.style.display = 'none';
+                }
             });
-            const result = await response.json();
-            alert(result.message);
-        });
-    </script>
-</body>
-</html>"""
+        </script>
+    </body>
+    </html>
+'''
+
+# HTML Template for displaying inventory with updated colors
+inventory_html = '''
+    <html>
+    <head>
+        <style>
+            body {
+                font-family: 'Roboto', sans-serif;
+                background: linear-gradient(135deg, #6e7fd5, #b8c1ec); /* Updated gradient */
+                margin: 0;
+                padding: 0;
+                color: #333;
+            }
+            .container {
+                max-width: 800px;
+                margin: 50px auto;
+                background-color: #f4f4f4;
+                border-radius: 10px;
+                padding: 40px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                text-align: center;
+                font-size: 2.5rem;
+                margin-bottom: 30px;
+            }
+            .inventory-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 30px;
+            }
+            .inventory-table th, .inventory-table td {
+                padding: 15px;
+                border: 1px solid #ddd;
+                text-align: center;
+                color: #555;
+            }
+            .inventory-table th {
+                background-color: #333;
+                color: white;
+                font-size: 18px;
+            }
+            .inventory-table tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            .inventory-table tr:hover {
+                background-color: #e0e0e0;
+                transform: translateY(-2px);
+                transition: background-color 0.3s, transform 0.3s;
+            }
+            .inventory-table td {
+                font-size: 16px;
+            }
+            a {
+                text-decoration: none;
+                color: #4CAF50;
+                display: block;
+                text-align: center;
+                margin-top: 20px;
+                font-size: 18px;
+                transition: color 0.3s ease-in-out;
+            }
+            a:hover {
+                color: #fff;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Inventory List</h1>
+            <table class="inventory-table">
+                <tr>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Last Updated</th>
+                </tr>
+                {% for item in items %}
+                <tr>
+                    <td><a href="/transactions/{{ item['item_name'] }}">{{ item['item_name'] }}</a></td>
+                    <td>{{ item['quantity'] }}</td>
+                    <td>{{ item['last_updated'] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <br><br>
+            <a href="/">Go Back to Add Inventory</a>
+        </div>
+    </body>
+    </html>
+'''
+
+# HTML Template for displaying transaction history
+transaction_html = '''
+    <html>
+    <head>
+        <style>
+            body {
+                font-family: 'Roboto', sans-serif;
+                background: linear-gradient(135deg, #6e7fd5, #b8c1ec);
+                margin: 0;
+                padding: 0;
+                color: #333;
+            }
+            .container {
+                max-width: 800px;
+                margin: 50px auto;
+                background-color: #f4f4f4;
+                border-radius: 10px;
+                padding: 40px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                text-align: center;
+                font-size: 2.5rem;
+                margin-bottom: 30px;
+            }
+            .transaction-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 30px;
+            }
+            .transaction-table th, .transaction-table td {
+                padding: 15px;
+                border: 1px solid #ddd;
+                text-align: center;
+                color: #555;
+            }
+            .transaction-table th {
+                background-color: #333;
+                color: white;
+                font-size: 18px;
+            }
+            .transaction-table tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            .transaction-table tr:hover {
+                background-color: #e0e0e0;
+            }
+            .transaction-table td {
+                font-size: 16px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Transaction History for {{ item_name }}</h1>
+            <table class="transaction-table">
+                <tr>
+                    <th>Transaction ID</th>
+                    <th>Date</th>
+                    <th>Quantity Changed</th>
+                    <th>Reason</th>
+                </tr>
+                {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction['transaction_id'] }}</td>
+                    <td>{{ transaction['date'] }}</td>
+                    <td>{{ transaction['quantity_changed'] }}</td>
+                    <td>{{ transaction['reason'] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <br><br>
+            <a href="/inventory">Go Back to Inventory</a>
+        </div>
+    </body>
+    </html>
+'''
 
 
-@app.route("/")
-def home():
-    return render_template_string(HTML_TEMPLATE)
+def record_transaction(item_name, quantity_changed, reason):
+    """Helper function to record transactions"""
+    transaction = {
+        "transaction_id": str(uuid.uuid4()),
+        "item_name": item_name,
+        "date": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "quantity_changed": quantity_changed,
+        "reason": reason
+    }
+    transactions_collection.insert_one(transaction)
 
+@app.route('/')
+def main():
+    return render_template_string(form_html)
 
-# API to Save Task
-@app.route('/save-task', methods=['POST'])
-def save_task():
-    data = request.json
-    date = data.get('date')
-    tasks = data.get('tasks')
+@app.route('/add', methods=['POST'])
+def add_item():
+    item_name = request.form.get('item_name')
+    quantity = int(request.form.get('quantity'))
+    reason = request.form.get('reason')
+    
+    # Handle "Other" reason
+    if reason == "Other":
+        other_reason = request.form.get('other_reason')
+        if other_reason:
+            reason = other_reason
+    
+    last_updated = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    if not date or not tasks:
-        return jsonify({'message': 'Invalid input'}), 400
+    # Check if the item exists in the inventory
+    existing_item = inventory_collection.find_one({"item_name": item_name})
 
-    task_collection = mongo.db.tasks
-    existing_task = task_collection.find_one({'date': date})
-
-    if existing_task:
-        task_collection.update_one({'date': date}, {'$set': {'tasks': tasks}})
-        return jsonify({'message': 'Task updated successfully'})
+    if existing_item:
+        # If the item exists, update the quantity
+        new_quantity = existing_item['quantity'] + quantity
+        inventory_collection.update_one(
+            {"item_name": item_name},
+            {"$set": {"quantity": new_quantity, "last_updated": last_updated}}
+        )
+        # Record transaction for update
+        record_transaction(
+            item_name=item_name,
+            quantity_changed=quantity,
+            reason=reason
+        )
     else:
-        task_collection.insert_one({'date': date, 'tasks': tasks})
-        return jsonify({'message': 'Task saved successfully'})
+        # If the item doesn't exist, insert it as a new record
+        inventory_collection.insert_one({
+            "item_name": item_name,
+            "quantity": quantity,
+            "last_updated": last_updated
+        })
+        # Record transaction for new item
+        record_transaction(
+            item_name=item_name,
+            quantity_changed=quantity,
+            reason=reason
+        )
+
+    return render_template_string(form_html)
+
+@app.route('/inventory')
+def inventory():
+    items = inventory_collection.find()
+    items_list = []
+    for item in items:
+        if 'last_updated' not in item:
+            item['last_updated'] = "Not Available"
+        items_list.append(item)
+    return render_template_string(inventory_html, items=items_list)
+
+@app.route('/transactions/<item_name>')
+def transaction_history(item_name):
+    transactions = transactions_collection.find(
+        {"item_name": item_name}
+    ).sort("date", -1)
+    
+    transaction_list = list(transactions)
+    return render_template_string(transaction_html, 
+                                item_name=item_name, 
+                                transactions=transaction_list)
 
 if __name__ == '__main__':
     app.run(debug=True)
