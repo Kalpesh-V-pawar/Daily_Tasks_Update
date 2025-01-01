@@ -9,10 +9,12 @@ app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb+srv://Kalpeshpawar:01042001@cluster0.s0fmo.mongodb.net/dailyTasks?retryWrites=true&w=majority"
 mongo = PyMongo(app)
 
-# Home Route to Serve HTML
-@app.route('/')
-def index():
-    return render_template_string(open('index.html').read())
+app = Flask(__name__, template_folder='.')
+
+@app.route("/")
+def home():
+    return render_template("index.html")  # Serve the HTML file
+
 
 # API to Save Task
 @app.route('/save-task', methods=['POST'])
