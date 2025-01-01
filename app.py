@@ -3,13 +3,12 @@ from flask_pymongo import PyMongo
 from datetime import datetime
 import uuid
 
-app = Flask(__name__)
 
 # MongoDB Configuration
 app.config["MONGO_URI"] = "mongodb+srv://Kalpeshpawar:01042001@cluster0.s0fmo.mongodb.net/dailyTasks?retryWrites=true&w=majority"
 mongo = PyMongo(app)
 
-app = Flask(__name__, template_folder='.')
+app = Flask(__name__, template_folder='templates')
 
 @app.route("/")
 def home():
