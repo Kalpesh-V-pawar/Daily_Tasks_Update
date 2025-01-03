@@ -20,7 +20,7 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Task Recorder</title>
-    <link rel="icon" href="img/kal.png" type="image/png">
+    <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
     <style>
         body {
             margin: 0;
