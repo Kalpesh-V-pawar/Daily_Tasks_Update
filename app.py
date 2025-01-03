@@ -15,48 +15,120 @@ task_collection = db['tasks']  # Specify the collection name
 # Embedded HTML template
 HTML_TEMPLATE = """
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Task Recorder</title>
     <style>
         body {
+            margin: 0;
             font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            background: linear-gradient(135deg, #ff7eb3, #ff758c, #fdb15c, #ffde59, #a7ff83, #17c3b2, #2d6cdf, #7c5cdb);
+            background-size: 300% 300%;
+            animation: gradientBG 10s ease infinite;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
-        h1 {
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: linear-gradient(135deg, #30343F, #404452);
+            backdrop-filter: blur(12px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            max-width: 450px;
+            width: 90%;
             text-align: center;
+            background-size: 200% 200%;
+            animation: containerGradient 6s ease infinite;
         }
-        label, textarea, input {
+
+        @keyframes containerGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin: 12px 0 6px;
+            font-size: 1rem;
+        }
+
+        input, textarea {
             width: 100%;
-            margin-bottom: 10px;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
+            padding: 8px;
+            margin-bottom: 18px;
             border: none;
-            cursor: pointer;
-            width: 100%;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #2e323d, #3a3e4a);
+            color: #ffffff;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+            resize: none;
         }
+
+        input:focus, textarea:focus {
+            outline: none;
+            background: linear-gradient(135deg, #383c48, #464a56);
+        }
+
+        button {
+            background-color: #ff758c;
+            color: #ffffff;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+        }
+
         button:hover {
-            background-color: #0056b3;
+            background-color: #ffde59;
+            color: #2e2e3e;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.7rem;
+            }
+
+            button {
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>What did you do today?</h1>
-    <form id="taskForm">
-        <label for="date">Date:</label>
-        <input type="date" id="date" name="date" required><br>
-        <label for="tasks">Tasks:</label><br>
-        <textarea id="tasks" name="tasks" rows="4" required></textarea><br>
-        <button type="submit">Save</button>
-    </form>
+    <div class="container">
+        <h1>What did you do today?</h1>
+        <form id="taskForm">
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" required>
+
+            <label for="tasks">Tasks:</label>
+            <textarea id="tasks" name="tasks" rows="4" required></textarea>
+
+            <button type="submit">Save</button>
+        </form>
+    </div>
 
     <script>
         document.getElementById('taskForm').addEventListener('submit', async (e) => {
@@ -77,6 +149,7 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
+
 
 @app.route("/")
 def home():
