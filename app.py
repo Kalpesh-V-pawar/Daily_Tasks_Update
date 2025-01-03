@@ -46,7 +46,7 @@ HTML_TEMPLATE = """
             border-radius: 15px;
             padding: 30px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-            max-width: 450px;
+            max-width: 425px;
             width: 90%;
             text-align: center;
             background-size: 200% 200%;
