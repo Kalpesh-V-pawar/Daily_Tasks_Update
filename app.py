@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 mongo_uri = os.getenv("MONGO_URI")  
 # MongoDB Atlas connection string
-client = MongoClient(mongo_uri)
+client = MongoClient("mongodb+srv://Kalpeshpawar:010402001@cluster0.s0fmo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client['dailyTasks']  # Specify the database name
 task_collection = db['tasks']  # Specify the collection name
 
