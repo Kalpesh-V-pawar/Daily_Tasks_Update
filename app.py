@@ -3,7 +3,7 @@ import os
 from flask import Flask, request, jsonify, render_template_string
 from pymongo import MongoClient
 
-\
+
 
 app = Flask(__name__)
 
