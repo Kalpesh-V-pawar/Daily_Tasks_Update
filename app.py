@@ -1,14 +1,15 @@
 import sys
+import os
 from flask import Flask, request, jsonify, render_template_string
 from pymongo import MongoClient
 
-# Add the path to your Python packages
-sys.path.append(r'C:\users\kalpe\appData\roaming\python\python312\site-packages')
+\
 
 app = Flask(__name__)
 
+mongo_uri = os.getenv("MONGO_URI")  
 # MongoDB Atlas connection string
-client = MongoClient("mongodb+srv://Kalpeshpawar:01042001@cluster0.s0fmo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient(mongo_uri)
 db = client['dailyTasks']  # Specify the database name
 task_collection = db['tasks']  # Specify the collection name
 
