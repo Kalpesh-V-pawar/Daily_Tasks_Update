@@ -13,6 +13,21 @@ client = MongoClient(mongo_uri)
 db = client['dailyTasks']  # Specify the database name
 task_collection = db['tasks']  # Specify the collection name
 
+
+LOGIN_page = """
+<html>
+    <head>
+        <title>Login page</title>
+    </head>
+    <body>
+        <h1>Enter your details</h1>
+        <form action="{{ url_for('Second_page') }}" method="get">
+            <button type="submit">Go to Second Page</button>
+        </form>
+   </body>     
+</html>
+
+"""
 # Embedded HTML template
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -155,7 +170,14 @@ HTML_TEMPLATE = """
 
 @app.route("/")
 def home():
-    return render_template_string(HTML_TEMPLATE)
+    return render_template_string(LOGIN_page)
+
+
+@app.route("/main")
+def main():
+    return render_template_string(HTML_PAGE)
+    
+
 
 # API to Save Task
 @app.route('/save-task', methods=['POST'])
