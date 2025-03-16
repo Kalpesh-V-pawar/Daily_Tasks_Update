@@ -3,16 +3,16 @@ import os
 from flask import Flask, request, jsonify, render_template_string
 from pymongo import MongoClient
 
-
-
 app = Flask(__name__)
 
-mongo_uri = os.getenv("MONGO_URI")  
 # MongoDB Atlas connection string
-client = MongoClient(mongo_uri)
-db = client['dailyTasks']  # Specify the database name
-task_collection = db['tasks']  # Specify the collection name
+mongo_uri = os.getenv("MONGO_URI")
+if not mongo_uri:
+    raise ValueError("MONGO_URI is not set. Please set it as an environment variable.")
 
+client = MongoClient(mongo_uri)
+db = client['dailyTasks']
+task_collection = db['tasks']
 
 LOGIN_page = """
 <html>
@@ -21,14 +21,13 @@ LOGIN_page = """
     </head>
     <body>
         <h1>Enter your details</h1>
-        <form action="{{ url_for('Second_page') }}" method="get">
+        <form action="{{ url_for('main') }}" method="get">
             <button type="submit">Go to Second Page</button>
         </form>
    </body>     
 </html>
-
 """
-# Embedded HTML template
+
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -167,17 +166,13 @@ HTML_TEMPLATE = """
 </html>
 """
 
-
 @app.route("/")
 def home():
     return render_template_string(LOGIN_page)
 
-
 @app.route("/main")
 def main():
     return render_template_string(HTML_TEMPLATE)
-    
-
 
 # API to Save Task
 @app.route('/save-task', methods=['POST'])
