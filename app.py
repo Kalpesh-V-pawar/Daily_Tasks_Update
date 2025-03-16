@@ -175,7 +175,7 @@ def home():
 
 @app.route("/main")
 def main():
-    return render_template_string(HTML_PAGE)
+    return render_template_string(HTML_TEMPLATE)
     
 
 
