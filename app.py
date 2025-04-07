@@ -4,6 +4,7 @@ import flask
 from flask import Flask, request, jsonify, render_template_string
 from pymongo import MongoClient
 from datetime import datetime
+import requests
 import pytz
 
 app = Flask(__name__)
@@ -12,6 +13,11 @@ app = Flask(__name__)
 mongo_uri = os.getenv("MONGO_URI")
 if not mongo_uri:
     raise ValueError("MONGO_URI is not set. Please set it as an environment variable.")
+
+GOOGLE_SCRIPT_URL = os.getenv("GOOGLE_SCRIPT_URL")
+if not GOOGLE_SCRIPT_URL:
+    print("Warning: GOOGLE_SCRIPT_URL is not set. Data will only be saved to MongoDB.")
+
 
 client = MongoClient(mongo_uri)
 db = client['dailyTasks']
@@ -566,13 +572,28 @@ def save_task():
     existing_task = task_collection.find_one({'date': date})
     if existing_task:
         task_collection.update_one({'date': date}, {'$set': {'tasks': tasks}})
-        return jsonify({'message': 'Task updated successfully'})
+        mongodb_msg = 'Task updated successfully in MongoDB'
     else:
 
         task_collection.insert_one({'date': date, 'tasks': tasks})
-        return jsonify({'message': 'Task saved successfully'})
+        mongodb_msg = 'Task saved successfully to MongoDB'
 
-
+    sheets_data = {
+        "type": "task",
+        "date": date,
+        "tasks": tasks
+    }
+    sheets_result = send_to_google_sheets(sheets_data)
+    
+    # Return combined result
+    if sheets_result.get("status") == "success":
+        return jsonify({
+            'message': f'{mongodb_msg} and Google Sheets'
+        })
+    else:
+        return jsonify({
+            'message': f'{mongodb_msg}. Google Sheets error: {sheets_result.get("message", "Unknown error")}'
+        })
 
 
 
@@ -606,7 +627,25 @@ def save_transaction():
         'usage': usage
     })
 
-    return jsonify({'message': 'Task saved successfully'}), 201
+    mongodb_msg = 'Transaction saved successfully to MongoDB'
+
+    sheets_data = {
+        "type": "transaction",
+        "date2": date2_formatted,
+        "amount": amount,
+        "usage": usage
+    }
+    sheets_result = send_to_google_sheets(sheets_data)
+    
+    # Return combined result
+    if sheets_result.get("status") == "success":
+        return jsonify({
+            'message': f'{mongodb_msg} and Google Sheets'
+        }), 201
+    else:
+        return jsonify({
+            'message': f'{mongodb_msg}. Google Sheets error: {sheets_result.get("message", "Unknown error")}'
+        }), 201
 
 if __name__ == '__main__':
     app.run(debug=True)
