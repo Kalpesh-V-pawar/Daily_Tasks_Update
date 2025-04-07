@@ -491,7 +491,7 @@ Paisa_page = """
         <button type="submit">Save</button>
     </form>
 </div>
-
+<button onclick="addNewForm()">Add Another Entry</button>
 <script>
     const toggleMode = document.getElementById('toggleMode');
     const dateInput = document.getElementById('date2');
@@ -564,6 +564,24 @@ Paisa_page = """
             alert('Failed to save task. Please try again.');
         }
     });
+
+function addNewForm() {
+    // Get the original form element
+    const originalForm = document.getElementById("paisa_form");
+
+    // Clone the form
+    const newForm = originalForm.cloneNode(true);
+
+    // Clear input values in the cloned form
+    const inputs = newForm.querySelectorAll("input, textarea");
+    inputs.forEach(input => input.value = "");
+
+    // Optional: Update ID to avoid duplicate IDs
+    newForm.id = "paisa_form_" + document.querySelectorAll("form").length;
+
+    // Append the new form to the container
+    document.getElementById("formContainer").appendChild(newForm);
+}    
 </script>
 
 </body>
@@ -673,4 +691,3 @@ def save_transaction():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
