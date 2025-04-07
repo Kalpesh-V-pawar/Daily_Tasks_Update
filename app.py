@@ -24,6 +24,30 @@ db = client['dailyTasks']
 task_collection = db['tasks']
 task_collection1 = db['paisatransactions']
 
+def send_to_google_sheets(data):
+    if not GOOGLE_SCRIPT_URL:
+        return {"status": "skipped", "message": "Google Script URL not configured"}
+    
+    try:
+        response = requests.post(
+            GOOGLE_SCRIPT_URL,
+            json=data,
+            timeout=10  # Set a timeout to prevent hanging
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {
+                "status": "error",
+                "message": f"Google Sheets API error: HTTP {response.status_code}"
+            }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Failed to send data to Google Sheets: {str(e)}"
+        }
+
 LOGIN_page = """
 <html>
     <head>
@@ -609,11 +633,11 @@ def save_transaction():
 
     try:
         # Validate date-time format (including hours and minutes)
-        date2 = datetime.strptime(date2, '%d-%m-%Y %H:%M')
+        date2_obj = datetime.strptime(date2, '%d-%m-%Y %H:%M')
 
-        # ✅ Convert to India time (GMT +5:30)
+        # Convert to India time (GMT +5:30)
         india_timezone = pytz.timezone('Asia/Kolkata')
-        date2 = india_timezone.localize(date2).strftime('%d-%m-%Y %H:%M')
+        date2_formatted = india_timezone.localize(date2_obj).strftime('%d-%m-%Y %H:%M')
     except ValueError:
         return jsonify({'message': 'Invalid date format. Use DD-MM-YYYY HH:MM'}), 400
 
@@ -622,7 +646,7 @@ def save_transaction():
 
     # ✅ Directly insert the task without checking for duplicates
     task_collection1.insert_one({
-        'date2': date2,  # Save in readable format
+        'date2': date2_formatted,  # Save in readable format
         'amount': amount,
         'usage': usage
     })
