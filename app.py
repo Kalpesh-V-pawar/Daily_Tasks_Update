@@ -162,6 +162,7 @@ LOGIN_page = """
     <form action="{{ url_for('paisa') }}" method="get">
         <button type="submit">Go to dengi Page</button>
     </form>
+    <script type='text/javascript' src='//pl26677118.profitableratecpm.com/a7/0f/34/a70f3406ef58579888372fbebaa0bcd4.js'></script>
    </body>     
 </html>
 """
@@ -300,6 +301,7 @@ HTML_TEMPLATE = """
             alert(result.message);
         });
     </script>
+    <script type='text/javascript' src='//pl26677118.profitableratecpm.com/a7/0f/34/a70f3406ef58579888372fbebaa0bcd4.js'></script>
 </body>
 </html>
 """
@@ -565,6 +567,7 @@ Paisa_page = """
         }
     });
 </script>
+<script type='text/javascript' src='//pl26677118.profitableratecpm.com/a7/0f/34/a70f3406ef58579888372fbebaa0bcd4.js'></script>
 
 </body>
 </html>
