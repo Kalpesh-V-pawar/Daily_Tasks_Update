@@ -666,8 +666,9 @@ def save_transaction():
     
     # Return combined result
     if sheets_result.get("status") == "success":
+        d2_value = sheets_result.get("d2Value", "N/A")
         return jsonify({
-            'message': f'{mongodb_msg} and Google Sheets'
+            'message': f'{mongodb_msg} and Google Sheets. D2 Value: {d2_value}'
         }), 201
     else:
         return jsonify({
