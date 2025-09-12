@@ -63,17 +63,17 @@ Maine_page = """
     <body>
         <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">
             <h1>Enter your pass</h1><br><br>
-            <form id = "Login form">
+            <form id = "Loginform">
                 <label for="user">Usernamee:</label>
                 <input type="text" id="user" name="user" required><br><br>
                 <label for="pass">Password:</label>
-                <input type="text" id="pass" name="pass" required><br><br>
+                <input type="password" id="pass" name="pass" required><br><br>
                 <button type="submit">login</button>
             </form>    
         </div>
      <script>
-        const farm = document.getElementById('Login form');addeventlistener("submit",async(e)=>{
-           e.preventdefault();
+        const farm = document.getElementById('Login form');addEventListener("submit",async(e)=>{
+           e.preventDefault();
             const usr = document.getElementById('user').value;
             const psr = document.getElementById('pass').value; 
                 const response = await fetch('/save_login', {
