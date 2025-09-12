@@ -6,7 +6,8 @@ from pymongo import MongoClient
 from datetime import datetime
 import requests
 import pytz
-import session
+from flask import session
+
 
 app = Flask(__name__)
 app.secret_key = "376757980"  # must be set for session to work
@@ -76,7 +77,7 @@ Maine_page = """
         </div>
      <script>
         const farm = document.getElementById('Loginform');
-        const err = document.getElementById('errorfooter').value; 
+        const err = document.getElementById('errorfooter'); 
         farm.addEventListener("submit",async(e)=>{
            e.preventDefault();
            err.textContent = "";
@@ -123,8 +124,8 @@ def save_login():
 
 @app.route("/LOGIN_page")
 def LOGIN_page_route():
-    if not session.get('logged_in')
-      return (url_for(Maine_page))
+    if not session.get('logged_in') :
+      return redirect (url_for(login))
     return render_template_string(LOGIN_page)
 
 LOGIN_page = """
