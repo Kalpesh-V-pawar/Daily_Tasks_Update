@@ -69,12 +69,15 @@ Maine_page = """
                 <label for="pass">Password:</label>
                 <input type="password" id="pass" name="pass" required><br><br>
                 <button type="submit">login</button>
+                <div id="errorfooter"></div>
             </form>    
         </div>
      <script>
         const farm = document.getElementById('Loginform');
+        const err = document.getElementById('errorfooter').value; 
         farm.addEventListener("submit",async(e)=>{
            e.preventDefault();
+           err.textContent = "";
             const usr = document.getElementById('user').value;
             const psr = document.getElementById('pass').value; 
                 const response = await fetch('/save_login', {
@@ -85,9 +88,12 @@ Maine_page = """
                     body: JSON.stringify({ usr, psr }),
                 });
                 const result = await response.json();
-                alert(result.message);
+                #alert(result.message); shows alert for every message fail, pass
                 if (result.status === "success") {
                  window.location.href = "/LOGIN_page"}
+                else {
+                  err.textContent = result.message;
+                } 
         });
      </script>  
     </body>  
