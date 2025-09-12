@@ -6,8 +6,10 @@ from pymongo import MongoClient
 from datetime import datetime
 import requests
 import pytz
+import session
 
 app = Flask(__name__)
+app.secret_key = "376757980"  # must be set for session to work
 
 # MongoDB Atlas connection string
 mongo_uri = os.getenv("MONGO_URI")
@@ -112,6 +114,8 @@ def save_login():
        'passwordm' : pasrn
     })
     if usr:
+        session['logged_in'] = True
+        session['username'] = usern
         return {"status": "success", "message": "Login successful"}
         #return redirect (url_for('LOGIN_page')) for direct redirect, but as in js response & result are awaiting reply, they seek status & message, and only one return cab be used
     else:
@@ -119,6 +123,8 @@ def save_login():
 
 @app.route("/LOGIN_page")
 def LOGIN_page_route():
+    if not session.get('logged_in')
+      return (url_for(Maine_page))
     return render_template_string(LOGIN_page)
 
 LOGIN_page = """
