@@ -63,7 +63,7 @@ Maine_page = """
     <body>
         <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">
             <h1>Enter your pass</h1><br><br>
-            <form id = "Loginform">
+            <form id = "Loginform" onsubmit="return false;">
                 <label for="user">Username:</label>
                 <input type="text" id="user" name="user" required><br><br>
                 <label for="pass">Password:</label>
