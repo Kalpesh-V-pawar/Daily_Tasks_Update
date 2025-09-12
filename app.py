@@ -23,6 +23,7 @@ client = MongoClient(mongo_uri)
 db = client['dailyTasks']
 task_collection = db['tasks']
 task_collection1 = db['paisatransactions']
+login_collection = db['uspass']
 
 def send_to_google_sheets(data):
     if not GOOGLE_SCRIPT_URL:
@@ -60,9 +61,52 @@ Maine_page = """
     <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
     </head>
     <body>
+        <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">
+            <h1>Enter your pass</h1><br><br>
+            <form id = "Login form">
+                <label for="user">Usernamee:</label>
+                <input type="text" id="user" name="user" required><br><br>
+                <label for="pass">Password:</label>
+                <input type="text" id="pass" name="pass" required><br><br>
+                <button type="submit">login</button>
+            </form>    
+        </div>
+     <script>
+        const farm = document.getelementByid('Login form');addeventlistner("submit",asynsc(e)=>{
+           e.preventdefault();
+            const usr = document.getelementByid('user').value;
+            const psr = document.getelementByid(pass").value; 
+                const response = await fetch('/save_login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ usr, psr }),
+                });
+                const result = await response.json();
+                alert(result.message);
+        });
+     </script>  
+    </body>  
+
+</html>    
+"""
 
 
-
+@app.route('/save-login', methods=['POST'])
+def save_login():
+    dataup = request.json
+    usern = dataup.get('usr')
+    pasrn = dataup.get('psr')
+    login_collection.find_one({
+       'usernamem' : usern,
+       'passwordm' : passrn
+    })
+    if user:
+        #return {"status": "success", "message": "Login successful"}
+        return redirect (url_for('LOGIN_page'))
+    else:
+        return {"status": "fail", "message": "Invalid username or password"}    
 
 
 
@@ -319,6 +363,7 @@ HTML_TEMPLATE = """
             alert(result.message);
         });
     </script>
+    <script type='text/javascript' src='//pl26677118.profitableratecpm.com/a7/0f/34/a70f3406ef58579888372fbebaa0bcd4.js'></script>
 </body>
 </html>
 """
@@ -592,7 +637,7 @@ Paisa_page = """
 
 @app.route("/")
 def login():
-    return render_template_string(LOGIN_page)
+    return render_template_string(Maine_page)
 
 @app.route("/dailytasks")
 def dailytasks():
