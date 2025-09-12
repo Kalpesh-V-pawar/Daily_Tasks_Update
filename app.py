@@ -96,7 +96,7 @@ Maine_page = """
 """
 
 
-@app.route('/save-login', methods=['POST'])
+@app.route('/save_login', methods=['POST'])
 def save_login():
     dataup = request.json
     usern = dataup.get('usr')
