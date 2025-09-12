@@ -48,6 +48,24 @@ def send_to_google_sheets(data):
             "message": f"Failed to send data to Google Sheets: {str(e)}"
         }
 
+
+
+
+Maine_page = """
+<html>
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
+    <title>Login page</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
+    </head>
+    <body>
+
+
+
+
+
+
 LOGIN_page = """
 <html>
     <head>
@@ -301,7 +319,6 @@ HTML_TEMPLATE = """
             alert(result.message);
         });
     </script>
-    <script type='text/javascript' src='//pl26677118.profitableratecpm.com/a7/0f/34/a70f3406ef58579888372fbebaa0bcd4.js'></script>
 </body>
 </html>
 """
