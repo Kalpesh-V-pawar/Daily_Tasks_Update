@@ -72,10 +72,10 @@ Maine_page = """
             </form>    
         </div>
      <script>
-        const farm = document.getelementByid('Login form');addeventlistner("submit",asynsc(e)=>{
+        const farm = document.getElementById('Login form');addeventlistener("submit",async(e)=>{
            e.preventdefault();
-            const usr = document.getelementByid('user').value;
-            const psr = document.getelementByid(pass").value; 
+            const usr = document.getElementById('user').value;
+            const psr = document.getElementById('pass').value; 
                 const response = await fetch('/save_login', {
                     method: 'POST',
                     headers: {
@@ -85,6 +85,8 @@ Maine_page = """
                 });
                 const result = await response.json();
                 alert(result.message);
+                if (result.status === "success") {
+                 window.location.href = "/LOGIN_page"}
         });
      </script>  
     </body>  
@@ -98,13 +100,13 @@ def save_login():
     dataup = request.json
     usern = dataup.get('usr')
     pasrn = dataup.get('psr')
-    login_collection.find_one({
+    usr = login_collection.find_one({
        'usernamem' : usern,
        'passwordm' : passrn
     })
-    if user:
-        #return {"status": "success", "message": "Login successful"}
-        return redirect (url_for('LOGIN_page'))
+    if usr:
+        return {"status": "success", "message": "Login successful"}
+        #return redirect (url_for('LOGIN_page')) for direct redirect, but as in js response & result are awaiting reply, they seek status & message, and only one return cab be used
     else:
         return {"status": "fail", "message": "Invalid username or password"}    
 
