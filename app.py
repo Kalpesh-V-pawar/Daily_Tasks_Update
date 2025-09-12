@@ -111,7 +111,9 @@ def save_login():
     else:
         return {"status": "fail", "message": "Invalid username or password"}    
 
-
+@app.route("/LOGIN_page")
+def LOGIN_page_route():
+    return render_template_string(LOGIN_page)
 
 LOGIN_page = """
 <html>
