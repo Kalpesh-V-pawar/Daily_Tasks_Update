@@ -102,7 +102,7 @@ def save_login():
     pasrn = dataup.get('psr')
     usr = login_collection.find_one({
        'usernamem' : usern,
-       'passwordm' : passrn
+       'passwordm' : pasrn
     })
     if usr:
         return {"status": "success", "message": "Login successful"}
