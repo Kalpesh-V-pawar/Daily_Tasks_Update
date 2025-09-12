@@ -88,7 +88,7 @@ Maine_page = """
                     body: JSON.stringify({ usr, psr }),
                 });
                 const result = await response.json();
-                #alert(result.message); shows alert for every message fail, pass
+                //alert(result.message); shows alert for every message fail, pass
                 if (result.status === "success") {
                  window.location.href = "/LOGIN_page"}
                 else {
