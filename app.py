@@ -64,7 +64,7 @@ Maine_page = """
         <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">
             <h1>Enter your pass</h1><br><br>
             <form id = "Loginform">
-                <label for="user">Usernamee:</label>
+                <label for="user">Username:</label>
                 <input type="text" id="user" name="user" required><br><br>
                 <label for="pass">Password:</label>
                 <input type="password" id="pass" name="pass" required><br><br>
@@ -72,7 +72,8 @@ Maine_page = """
             </form>    
         </div>
      <script>
-        const farm = document.getElementById('Loginform');farm.addEventListener("submit",async(e)=>{
+        const farm = document.getElementById('Loginform');
+        farm.addEventListener("submit",async(e)=>{
            e.preventDefault();
             const usr = document.getElementById('user').value;
             const psr = document.getElementById('pass').value; 
