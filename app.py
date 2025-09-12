@@ -72,7 +72,7 @@ Maine_page = """
             </form>    
         </div>
      <script>
-        const farm = document.getElementById('Login form');addEventListener("submit",async(e)=>{
+        const farm = document.getElementById('Loginform');addEventListener("submit",async(e)=>{
            e.preventDefault();
             const usr = document.getElementById('user').value;
             const psr = document.getElementById('pass').value; 
