@@ -870,322 +870,281 @@ Paisa_page = """
 
 Notes_page = """
 <html>
-<html lang="en">
+<html lang='en'>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Notes — Dark iOS Style</title>
-  <style>
-    :root{
-      --bg:#0b0b0d;
-      --card:#0f1113;
-      --muted:#9aa0a6;
-      --accent:#ffd94d; /* warm gold highlight */
-      --glass: rgba(255,255,255,0.03);
-      --soft: rgba(255,255,255,0.02);
-      --radius: 14px;
-      --shadow: 0 6px 18px rgba(0,0,0,0.6);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    }
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>Notes</title>
 
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,#070708, #0c0c0e);color:#fff;}
-    .app {max-width:940px;margin:28px auto;padding:18px;}
-    header {display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    h1{font-size:20px;margin:0;color:#fff}
-    .sub {color:var(--muted);font-size:13px}
+<!-- Quill CSS -->
+<link href='https://cdn.quilljs.com/1.3.6/quill.snow.css' rel='stylesheet'>
 
-    /* Search / controls */
-    .controls {display:flex;gap:12px;align-items:center}
-    .search {
-      display:flex;align-items:center;background:var(--glass);padding:10px 12px;border-radius:12px;backdrop-filter: blur(6px);
-      box-shadow: var(--shadow); border:1px solid rgba(255,255,255,0.02);
-    }
-    .search input{background:transparent;border:0;outline:none;color:#fff;width:220px}
+<style>
+/* -------------------------------------------
+   iPhone Style Dark Mode
+-------------------------------------------- */
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #111;
+    color: white;
+    overflow-x: hidden;
+}
 
-    .filters {display:flex;gap:8px;align-items:center}
-    .select, .input {background:var(--soft);padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);color:#fff}
-    .select select, .input input{background:transparent;border:0;color:#fff;outline:none}
+h1 {
+    text-align: center;
+    padding: 20px 0;
+    margin: 0;
+    font-weight: 600;
+    color: #f0f0f0;
+}
 
-    /* notes grid */
-    .grid {display:grid;grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap:14px;margin-top:16px}
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:12px;padding:14px;box-shadow: var(--shadow);border:1px solid rgba(255,255,255,0.03);
-      transform-origin: top center;overflow:hidden;
-    }
-    .title {font-weight:600;color: #fff;font-size:16px;margin-bottom:6px}
-    .time {font-size:12px;color:var(--muted);margin-bottom:8px}
-    .content {color:#e6e6e6;font-size:14px;margin-bottom:10px;max-height:140px;overflow:auto}
-    .tags {display:flex;gap:6px;flex-wrap:wrap}
-    .tag {font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted)}
+/* Notes container */
+#notesContainer {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 
-    .card-actions{display:flex;gap:8px;justify-content:flex-end}
-    .btn {border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:600}
-    .btn-edit{background:#2baf7a;color:#fff}
-    .btn-delete{background:#ff4b5c;color:#fff}
+/* Card styling */
+.noteCard {
+    background: #1c1c1e;
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px solid #2c2c2e;
+    animation: slideDown 0.3s ease;
+}
 
-    /* floating + */
-    .fab {
-      position:fixed;right:24px;bottom:28px;width:62px;height:62px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#ffd94d,#ffb700);
-      color:#111;font-size:32px;box-shadow: 0 10px 30px rgba(0,0,0,0.6);cursor:pointer;border:4px solid rgba(255,255,255,0.06);
-    }
+.noteCard:hover {
+    background: #2c2c2e;
+    cursor: pointer;
+}
 
-    /* editor modal (slide-down) */
-    .editor {
-      position:fixed;left:50%;transform:translateX(-50%) translateY(-120%);top:8%;width:92%;max-width:820px;background:var(--card);border-radius:16px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,0.7);
-      transition: transform 300ms cubic-bezier(.2,.9,.2,1), opacity 220ms;opacity:0;z-index:999;
-      border:1px solid rgba(255,255,255,0.03);
-    }
-    .editor.open { transform:translateX(-50%) translateY(0); opacity:1;}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-    .editor .toolbar {display:flex;gap:8px;align-items:center;margin-bottom:8px}
-    .toolbar button{background:transparent;border:0;color:var(--muted);padding:8px;border-radius:8px;cursor:pointer}
-    .toolbar button.active{color:var(--accent);background:rgba(255,217,77,0.06)}
+/* Floating add button */
+#addBtn {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    width: 58px;
+    height: 58px;
+    background: #0a84ff;
+    border-radius: 50%;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+    color: white;
+    font-size: 34px;
+    display:flex; 
+    justify-content:center; 
+    align-items:center;
+    cursor:pointer;
+}
 
-    .editor .fields{display:flex;gap:12px}
-    .editor input.title{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#fff}
-    .editor .tags-input{width:220px;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#fff}
+/* Modal */
+.modal {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    justify-content:center;
+    align-items:center;
+}
 
-    .editor .rte {
-      margin-top:10px;border-radius:12px;padding:12px;min-height:120px;background:linear-gradient(180deg,#0b0b0d,#101215); color:#fff;outline:none;border:1px solid rgba(255,255,255,0.02)
-    }
+.modalContent {
+    background:#1c1c1e;
+    padding:20px;
+    width:90%;
+    max-width:420px;
+    border-radius:16px;
+    border:1px solid #2c2c2e;
+}
 
-    .editor .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-    .editor .save{background:var(--accent);padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+input, .ql-container {
+    width:100%;
+    margin-top:10px;
+}
 
-    /* small helpers */
-    .muted{color:var(--muted);font-size:13px}
-    @media (max-width:480px){
-      .search input{width:120px}
-      .editor{top:6%}
-    }
-  </style>
+button {
+    background:#0a84ff;
+    color:white;
+    padding:10px 16px;
+    border:none;
+    border-radius:10px;
+    margin-top:12px;
+}
+
+#deleteBtn {
+    background:#ff453a;
+}
+</style>
 </head>
+
 <body>
-  <div class="app">
-    <header>
-      <div>
-        <h1>Notes</h1>
-        <div class="sub muted">iOS Dark • Your private notes</div>
-      </div>
 
-      <div class="controls">
-        <div class="search">
-          🔍 &nbsp;<input id="searchInput" placeholder="Search notes, tags..." />
-        </div>
+<h1>Your Notes</h1>
 
-        <div class="select">
-          <select id="tagFilter">
-            <option value="">All tags</option>
-          </select>
-        </div>
+<!-- Search -->
+<div style='padding: 0 20px;'>
+    <input id='searchBox' placeholder='Search...' style='width:100%; padding:12px; border-radius:12px; border:none; background:#2c2c2e; color:white;'>
+</div>
 
-        <div class="input">
-          <input id="dateFilter" type="date" />
-        </div>
-      </div>
-    </header>
+<!-- Notes List -->
+<div id='notesContainer'></div>
 
-    <main>
-      <div id="notesGrid" class="grid"></div>
-    </main>
+<!-- Floating add button -->
+<div id='addBtn'>+</div>
+
+<!-- Modal -->
+<div id='modal' class='modal'>
+  <div class='modalContent'>
+      <h2 id='modalTitle'>New Note</h2>
+
+      <input id='titleInput' placeholder='Title'>
+
+      <!-- Quill editor -->
+      <div id='editor' style='height:160px; background:white; color:black; margin-top:10px;'></div>
+
+      <input id='tagsInput' placeholder='Tags (comma separated)'>
+
+      <button id='saveBtn'>Save</button>
+      <button id='deleteBtn' style='display:none;'>Delete</button>
+      <button onclick='closeModal()' style='background:#444;'>Cancel</button>
   </div>
+</div>
 
-  <!-- floating add -->
-  <div class="fab" id="openEditor">+</div>
-
-  <!-- Editor modal -->
-  <div class="editor" id="editor">
-    <div class="toolbar">
-      <button id="boldBtn"><b>B</b></button>
-      <button id="italicBtn"><i>I</i></button>
-      <button id="underlineBtn"><u>U</u></button>
-      <button id="bulletBtn">• List</button>
-      <button id="linkBtn">🔗</button>
-      <div class="muted" style="margin-left:8px">Formatting</div>
-    </div>
-
-    <div class="fields">
-      <input id="noteTitle" class="title" placeholder="Title (optional)" />
-      <input id="noteTags" class="tags-input" placeholder="tags comma-separated" />
-    </div>
-
-    <div id="rte" class="rte" contenteditable="true" placeholder="Start writing..."></div>
-
-    <div class="footer">
-      <div class="muted" id="charCount">0 chars</div>
-      <div>
-        <button class="save" id="saveNoteBtn">Save</button>
-        <button class="btn" id="closeEditor" style="margin-left:8px;background:transparent;color:var(--muted)">Cancel</button>
-      </div>
-    </div>
-  </div>
+<!-- Quill JS -->
+<script src='https://cdn.quilljs.com/1.3.6/quill.js'></script>
 
 <script>
-  // state
-  let NOTES = [];     // fetched notes
-  let editingId = null;
+const API = "https://script.google.com/macros/s/AKfycbwEZizUjeRyE2YhZVNUvzmdxikEGAWmYxTC0X6ZRNmS8coUnIsXW1PT_J7aDx7UQZjJWg/exec";
 
-  // elements
-  const editor = document.getElementById('editor');
-  const openEditorBtn = document.getElementById('openEditor');
-  const closeEditorBtn = document.getElementById('closeEditor');
-  const saveNoteBtn = document.getElementById('saveNoteBtn');
-  const notesGrid = document.getElementById('notesGrid');
-  const searchInput = document.getElementById('searchInput');
-  const tagFilter = document.getElementById('tagFilter');
-  const dateFilter = document.getElementById('dateFilter');
-  const noteTitle = document.getElementById('noteTitle');
-  const noteTags = document.getElementById('noteTags');
-  const rte = document.getElementById('rte');
-  const charCount = document.getElementById('charCount');
-
-  // toolbar
-  document.getElementById('boldBtn').addEventListener('click', ()=> document.execCommand('bold'));
-  document.getElementById('italicBtn').addEventListener('click', ()=> document.execCommand('italic'));
-  document.getElementById('underlineBtn').addEventListener('click', ()=> document.execCommand('underline'));
-  document.getElementById('bulletBtn').addEventListener('click', ()=> document.execCommand('insertUnorderedList'));
-  document.getElementById('linkBtn').addEventListener('click', ()=>{
-    const url = prompt("Enter URL (include https://)");
-    if (url) document.execCommand('createLink', false, url);
-  });
-
-  // editor open/close
-  openEditorBtn.addEventListener('click', ()=>{
-    editingId = null;
-    noteTitle.value = '';
-    noteTags.value = '';
-    rte.innerHTML = '';
-    editor.classList.add('open');
-    setTimeout(()=> rte.focus(), 220);
-  });
-  closeEditorBtn.addEventListener('click', ()=> editor.classList.remove('open'));
-
-  // char count
-  rte.addEventListener('input', ()=> charCount.textContent = rte.innerText.length + " chars");
-
-  // load notes from server
-  async function fetchNotes(){
-    const res = await fetch('/get_notes');
-    NOTES = await res.json();
-    populateTagFilter();
-    renderNotes();
-  }
-
-  // populate tag filter options
-  function populateTagFilter(){
-    const allTags = new Set();
-    NOTES.forEach(n => (n.tags||[]).forEach(t => allTags.add(t)));
-    tagFilter.innerHTML = '<option value="">All tags</option>';
-    Array.from(allTags).sort().forEach(t => {
-      const opt = document.createElement('option'); opt.value = t; opt.textContent = t; tagFilter.appendChild(opt);
-    });
-  }
-
-  // render notes with search & filters (animated)
-  function renderNotes(){
-    const q = (searchInput.value||'').toLowerCase();
-    const selectedTag = tagFilter.value;
-    const dateVal = dateFilter.value; // YYYY-MM-DD
-
-    notesGrid.innerHTML = '';
-
-    const filtered = NOTES.filter(n => {
-      if (selectedTag && !(n.tags||[]).includes(selectedTag)) return false;
-      if (dateVal && !n.timestamp.startsWith(dateVal)) {
-         // timestamp format 'YYYY-MM-DD HH:MM:SS' so startsWith works
-         return false;
-      }
-      if (!q) return true;
-      // search title, content (strip html), tags
-      const text = (n.title + ' ' + (n.content.replace(/<[^>]*>?/gm, '') || '') + ' ' + (n.tags||[]).join(' ')).toLowerCase();
-      return text.includes(q);
-    });
-
-    filtered.forEach(n => {
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.style.animation = 'slideDown .28s ease';
-      div.innerHTML = `
-        <div class="title">${escapeHtml(n.title || '')}</div>
-        <div class="time">${n.timestamp}</div>
-        <div class="content">${n.content || ''}</div>
-        <div class="tags">${(n.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
-        <div class="card-actions" style="margin-top:10px">
-          <button class="btn btn-edit" onclick='openEdit("${n.id}")'>Edit</button>
-          <button class="btn btn-delete" onclick='deleteNote("${n.id}")'>Delete</button>
-        </div>
-      `;
-      notesGrid.appendChild(div);
-    });
-
-    // tiny animation keyframes inserted once:
-    if (!document.getElementById('notes-anim')) {
-      const s = document.createElement('style'); s.id='notes-anim';
-      s.innerHTML = '@keyframes slideDown{from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:translateY(0)}}';
-      document.head.appendChild(s);
+let quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Write something...',
+    modules: {
+        toolbar: [
+            ['bold', 'italic', 'underline'],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['image']
+        ]
     }
-  }
+});
 
-  // helpers
-  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+let editId = null;
 
-  // open edit modal prefilled
-  function openEdit(id){
-    const n = NOTES.find(x=>x.id===id);
-    if(!n) return;
-    editingId = id;
-    noteTitle.value = n.title || '';
-    noteTags.value = (n.tags||[]).join(', ');
-    rte.innerHTML = n.content || '';
-    editor.classList.add('open');
-    setTimeout(()=> rte.focus(), 220);
-  }
+/* --------------------------
+   Load Notes
+-------------------------- */
+async function loadNotes() {
+    const res = await fetch(API + '?action=get_notes');
+    const notes = await res.json();
 
-  // add / save note
-  saveNoteBtn.addEventListener('click', async ()=>{
-    const title = noteTitle.value.trim();
-    const rawTags = noteTags.value.split(',').map(t=>t.trim()).filter(Boolean);
-    const content = rte.innerHTML.trim();
+    const box = document.getElementById('notesContainer');
+    box.innerHTML = '';
 
-    if(editingId){
-      await fetch('/edit_note', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ id: editingId, title, content, tags: rawTags })
-      });
+    notes.forEach(n => {
+        let d = document.createElement('div');
+        d.className = 'noteCard';
+        d.innerHTML = `
+            <div style='font-size:18px;font-weight:600;'>${n.title || 'Untitled'}</div>
+            <div style='opacity:.7; margin-top:4px;'>${n.timestamp}</div>
+        `;
+        d.onclick = ()=> openModal(n);
+        box.appendChild(d);
+    });
+}
+
+loadNotes();
+
+/* --------------------------
+   Modal Controls
+-------------------------- */
+function openModal(note=null) {
+    document.getElementById('modal').style.display='flex';
+
+    if (note) {
+        editId = note.id;
+        document.getElementById('modalTitle').innerText = 'Edit Note';
+        document.getElementById('titleInput').value = note.title;
+        document.getElementById('tagsInput').value = note.tags.join(',');
+        quill.root.innerHTML = note.content;
+        document.getElementById('deleteBtn').style.display = 'inline-block';
     } else {
-      await fetch('/add_note', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ title, content, tags: rawTags })
-      });
+        editId = null;
+        document.getElementById('modalTitle').innerText = 'New Note';
+        document.getElementById('titleInput').value = '';
+        document.getElementById('tagsInput').value = '';
+        quill.root.innerHTML = '';
+        document.getElementById('deleteBtn').style.display = 'none';
+    }
+}
+
+function closeModal() {
+    document.getElementById('modal').style.display='none';
+}
+
+/* --------------------------
+   Add/Edit Note
+-------------------------- */
+document.getElementById('saveBtn').onclick = async () => {
+    const title = document.getElementById('titleInput').value;
+    const tags = document.getElementById('tagsInput').value.split(',').map(s=>s.trim());
+    const content = quill.root.innerHTML;
+
+    const payload = {
+        title, content, tags
+    };
+
+    let action = 'add_note';
+
+    if (editId) {
+        payload.id = editId;
+        action = 'edit_note';
     }
 
-    editor.classList.remove('open');
-    await fetchNotes();
-  });
-
-  // delete
-  async function deleteNote(id){
-    if(!confirm('Delete this note?')) return;
-    await fetch('/delete_note', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ id })
+    await fetch(API + '?action=' + action, {
+        method:'POST',
+        body: JSON.stringify(payload)
     });
-    await fetchNotes();
-  }
 
-  // search & filters events
-  searchInput.addEventListener('input', ()=> renderNotes());
-  tagFilter.addEventListener('change', ()=> renderNotes());
-  dateFilter.addEventListener('change', ()=> renderNotes());
+    closeModal();
+    loadNotes();
+};
 
-  // init
-  fetchNotes();
+/* --------------------------
+   Delete Note
+-------------------------- */
+document.getElementById('deleteBtn').onclick = async () => {
+    if (!confirm('Delete this note?')) return;
+
+    await fetch(API + '?action=delete_note', {
+        method:'POST',
+        body: JSON.stringify({ id: editId })
+    });
+
+    closeModal();
+    loadNotes();
+};
+
+/* --------------------------
+   Search Filter
+-------------------------- */
+document.getElementById('searchBox').oninput = () => {
+    let q = document.getElementById('searchBox').value.toLowerCase();
+    document.querySelectorAll('.noteCard').forEach(card=>{
+        card.style.display = card.innerText.toLowerCase().includes(q) ? 'block' : 'none';
+    });
+};
+
+document.getElementById('addBtn').onclick = () => openModal();
+
 </script>
+
 </body>
 </html>
 """
