@@ -289,106 +289,162 @@ LOGIN_page = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">    
     <title>Login page</title>
     <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #ff7eb3, #ff758c, #fdb15c, #ffde59, #a7ff83, #17c3b2, #2d6cdf, #7c5cdb);
-            background-size: 300% 300%;
-            animation: gradientBG 10s ease infinite;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .container {
-            background: linear-gradient(135deg, #30343F, #404452);
-            backdrop-filter: blur(12px);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-            max-width: 425px;
-            width: 90%;
-            text-align: center;
-            background-size: 200% 200%;
-            animation: containerGradient 6s ease infinite;
-        }
-
-        @keyframes containerGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin: 12px 0 6px;
-            font-size: 1rem;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 18px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            background: linear-gradient(135deg, #2e323d, #3a3e4a);
-            color: #ffffff;
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
-            resize: none;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            background: linear-gradient(135deg, #383c48, #464a56);
-        }
-
-        button {
-            background-color: #ff758c;
-            color: #ffffff;
-            border: none;
-            padding: 14px 22px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
-        }
-
-        button:hover {
-            background-color: #ffde59;
-            color: #2e2e3e;
-            transform: scale(1.05);
-        }
-
-        @media (max-width: 768px) {
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background: linear-gradient(135deg, #ff7eb3, #ff758c, #fdb15c, #ffde59, #a7ff83, #17c3b2, #2d6cdf, #7c5cdb);
+                background-size: 300% 300%;
+                animation: gradientBG 10s ease infinite;
+                color: #ffffff;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+            }
+    
+            @keyframes gradientBG {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+    
+            .container {
+                background: linear-gradient(135deg, #30343F, #404452);
+                backdrop-filter: blur(12px);
+                border-radius: 15px;
+                padding: 30px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+                max-width: 425px;
+                width: 90%;
+                text-align: center;
+                background-size: 200% 200%;
+                animation: containerGradient 6s ease infinite;
+            }
+    
+            @keyframes containerGradient {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+    
             h1 {
-                font-size: 1.7rem;
+                font-size: 2rem;
+                margin-bottom: 25px;
             }
-
+    
+            label {
+                display: block;
+                margin: 12px 0 6px;
+                font-size: 1rem;
+            }
+    
+            input, textarea {
+                width: 100%;
+                padding: 8px;
+                margin-bottom: 18px;
+                border: none;
+                border-radius: 8px;
+                font-size: 1rem;
+                background: linear-gradient(135deg, #2e323d, #3a3e4a);
+                color: #ffffff;
+                box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+                resize: none;
+            }
+    
+            input:focus, textarea:focus {
+                outline: none;
+                background: linear-gradient(135deg, #383c48, #464a56);
+            }
+    
             button {
-                font-size: 0.9rem;
+                background-color: #ff758c;
+                color: #ffffff;
+                border: none;
+                padding: 14px 22px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1rem;
+                transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
             }
-        }
-    </style>    
+    
+            button:hover {
+                background-color: #ffde59;
+                color: #2e2e3e;
+                transform: scale(1.05);
+            }
+    
+            @media (max-width: 768px) {
+                h1 {
+                    font-size: 1.7rem;
+                }
+    
+                button {
+                    font-size: 0.9rem;
+                }
+            }
+            .toggle-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            .toggle-label {
+                font-size: 1rem;
+                color: #555;
+            }
+            .toggle-switch {
+                position: relative;
+                display: inline-block;
+                width: 40px;
+                height: 20px;
+            }
+            .toggle-switch input {
+                display: none;
+            }
+            .slider {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                border-radius: 20px;
+                transition: 0.4s;
+                cursor: pointer;
+            }
+            .slider::before {
+                position: absolute;
+                content: "";
+                height: 14px;
+                width: 14px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                border-radius: 50%;
+                transition: 0.4s;
+            }
+            input:checked + .slider {
+                background-color: #4CAF50;
+            }
+            input:checked + .slider::before {
+                transform: translateX(20px);
+            }
+            label, input, textarea, button {
+                display: block;
+                width: 100%;
+                margin-bottom: 10px;
+                font-size: 1rem;
+            }
+    
+        </style>    
     </head>
     <body>
-<div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">    
+<div class="container">    
+ <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">    
         <h1>Enter your details</h1><br><br>
-<div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">
+ <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">
     <form action="{{ url_for('dailytasks') }}" method="get">
         <button type="submit">Go to Second Page</button>
     </form>
@@ -399,7 +455,8 @@ LOGIN_page = """
 
     <form action="{{ url_for('notes') }}" method="get">
         <button type="submit">Go to notee Page</button>
-    </form>    
+    </form>  
+ <div class="container">  
     <script type='text/javascript' src='//pl26677118.profitableratecpm.com/a7/0f/34/a70f3406ef58579888372fbebaa0bcd4.js'></script>
    </body>     
 </html>
