@@ -218,7 +218,7 @@ Maine_page = """
         </style>   
     </head>
     <body>
-        <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">
+        <div class="container">
             <h1>Enter your pass</h1><br><br>
             <form id = "Loginform" onsubmit="return false;">
                 <label for="user">Username:</label>
