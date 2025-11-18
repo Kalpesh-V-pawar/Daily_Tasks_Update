@@ -27,6 +27,7 @@ db = client['dailyTasks']
 task_collection = db['tasks']
 task_collection1 = db['paisatransactions']
 login_collection = db['uspass']
+notes_collection = db['notes']
 
 def send_to_google_sheets(data):
     if not GOOGLE_SCRIPT_URL:
@@ -242,6 +243,10 @@ LOGIN_page = """
     <form action="{{ url_for('paisa') }}" method="get">
         <button type="submit">Go to dengi Page</button>
     </form>
+
+    <form action="{{ url_for('notes') }}" method="get">
+        <button type="submit">Go to notee Page</button>
+    </form>    
     <script type='text/javascript' src='//pl26677118.profitableratecpm.com/a7/0f/34/a70f3406ef58579888372fbebaa0bcd4.js'></script>
    </body>     
 </html>
@@ -653,6 +658,69 @@ Paisa_page = """
 </html>
 """
 
+Notes_page = """
+<html>
+<head>
+<title>Notes</title>
+</head>
+<body>
+<h2>Your Notes</h2>
+
+<form id="noteForm">
+    <textarea id="noteData" rows="4" cols="40" placeholder="Write note here..."></textarea><br><br>
+    <button type="submit">Add Note</button>
+</form>
+
+<div id="message"></div>
+
+<h3>Saved Notes:</h3>
+<div id="notesList"></div>
+
+<script>
+async function loadNotes() {
+    const res = await fetch('/get_notes');
+    const notes = await res.json();
+    document.getElementById("notesList").innerHTML = notes.map(n =>
+        `<p>${n.note} <button onclick="deleteNote('${n._id}')">Delete</button></p>`
+    ).join("");
+}
+
+loadNotes();
+
+document.getElementById("noteForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const note = document.getElementById('noteData').value;
+
+    const res = await fetch('/add_note', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({note})
+    });
+
+    const result = await res.json();
+    document.getElementById('message').innerHTML = result.message;
+    loadNotes();
+});
+
+async function deleteNote(id) {
+    await fetch('/delete_note/' + id, {method: 'DELETE'});
+    loadNotes();
+}
+</script>
+
+</body>
+</html>
+"""
+
+def login_required(func):
+    def wrapper(*args, **kwargs):
+        if "username" not in session:
+            return redirect(url_for("Login_page"))
+        return func(*args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+
 @app.route("/")
 def login():
     return render_template_string(Maine_page)
@@ -664,6 +732,13 @@ def dailytasks():
 @app.route("/paisa")
 def paisa():
     return render_template_string(Paisa_page)
+
+@app.route('/notes')
+@login_required
+def notes():
+    return Notes_page
+
+
 
 # API to Save Task
 @app.route('/save_task', methods=['POST'])
@@ -754,6 +829,43 @@ def save_transaction():
         return jsonify({
             'message': f'{mongodb_msg}. Google Sheets error: {sheets_result.get("message", "Unknown error")}'
         }), 201
+
+
+@app.route('/add_note', methods=['POST'])
+@login_required
+def add_note():
+    data = request.json
+    note = data.get("note")
+
+    notes_collection.insert_one({
+        "username": session['username'],
+        "note": note
+    })
+
+    return jsonify({"message": "Note added!"})
+
+@app.route('/get_notes')
+@login_required
+def get_notes():
+    username = session['username']
+    notes = list(notes_collection.find({"username": username}, {"_id": 1, "note": 1}))
+    for n in notes:
+        n["_id"] = str(n["_id"])
+    return jsonify(notes)
+
+from bson import ObjectId
+
+@app.route('/delete_note/<note_id>', methods=['DELETE'])
+@login_required
+def delete_note(note_id):
+    notes_collection.delete_one({"_id": ObjectId(note_id)})
+    return jsonify({"message": "Deleted"})
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for("Login_page"))
+
 
 if __name__ == '__main__':
     app.run(debug=True)
