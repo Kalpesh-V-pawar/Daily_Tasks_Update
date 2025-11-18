@@ -1324,47 +1324,66 @@ def get_notes():
     return jsonify(notes)
 
 
+def serialize_note(note):
+    note["_id"] = str(note["_id"])
+    return note
+
+
 @app.route("/add_note", methods=["POST"])
 @login_required
 def add_note():
     data = request.json
-    title = data.get("title", "").strip()
-    content = data.get("content", "").strip()   # HTML from contenteditable
-    tags = data.get("tags", [])                 # list of strings
 
-    if not content and not title:
+    title = data.get("title", "").strip()
+    content = data.get("content", "").strip()
+    tags = data.get("tags", [])
+
+    if not title and not content:
         return jsonify({"status": "fail", "message": "Note is empty"}), 400
 
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    notes_collection.insert_one({
+
+    result = notes_collection.insert_one({
         "title": title,
         "content": content,
         "tags": tags,
         "timestamp": ts
     })
-    return jsonify({"status": "success"})
 
+    return jsonify({
+        "status": "success",
+        "id": str(result.inserted_id)   # IMPORTANT!!!
+    })
 
 @app.route("/edit_note", methods=["POST"])
 @login_required
 def edit_note():
     data = request.json
     note_id = data.get("id")
+
     if not note_id:
         return jsonify({"status": "fail", "message": "Missing id"}), 400
 
-    update = {}
+    try:
+        oid = ObjectId(note_id)
+    except:
+        return jsonify({"status": "fail", "message": "Invalid ObjectId"}), 400
+
+    update = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
     if "title" in data:
-        update["title"] = data.get("title", "")
+        update["title"] = data["title"]
     if "content" in data:
-        update["content"] = data.get("content", "")
+        update["content"] = data["content"]
     if "tags" in data:
-        update["tags"] = data.get("tags", [])
+        update["tags"] = data["tags"]
 
-    update["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    notes_collection.update_one({"_id": oid}, {"$set": update})
 
-    notes_collection.update_one({"_id": ObjectId(note_id)}, {"$set": update})
     return jsonify({"status": "success"})
+
 
 
 @app.route("/delete_note", methods=["POST"])
@@ -1372,10 +1391,22 @@ def edit_note():
 def delete_note():
     data = request.json
     note_id = data.get("id")
+
     if not note_id:
         return jsonify({"status": "fail", "message": "Missing id"}), 400
-    notes_collection.delete_one({"_id": ObjectId(note_id)})
+
+    try:
+        oid = ObjectId(note_id)
+    except:
+        return jsonify({"status": "fail", "message": "Invalid ObjectId"}), 400
+
+    result = notes_collection.delete_one({"_id": oid})
+
+    if result.deleted_count == 0:
+        return jsonify({"status": "fail", "message": "Note not found"}), 404
+
     return jsonify({"status": "success"})
+
     
 @app.route('/logout')
 def logout():
