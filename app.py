@@ -870,142 +870,322 @@ Paisa_page = """
 
 Notes_page = """
 <html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>My Notes</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #f5f6fa;
-            padding: 30px;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notes — Dark iOS Style</title>
+  <style>
+    :root{
+      --bg:#0b0b0d;
+      --card:#0f1113;
+      --muted:#9aa0a6;
+      --accent:#ffd94d; /* warm gold highlight */
+      --glass: rgba(255,255,255,0.03);
+      --soft: rgba(255,255,255,0.02);
+      --radius: 14px;
+      --shadow: 0 6px 18px rgba(0,0,0,0.6);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
 
-        .container {
-            max-width: 600px;
-            margin: auto;
-        }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#070708, #0c0c0e);color:#fff;}
+    .app {max-width:940px;margin:28px auto;padding:18px;}
+    header {display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    h1{font-size:20px;margin:0;color:#fff}
+    .sub {color:var(--muted);font-size:13px}
 
-        h2 {
-            text-align: center;
-        }
+    /* Search / controls */
+    .controls {display:flex;gap:12px;align-items:center}
+    .search {
+      display:flex;align-items:center;background:var(--glass);padding:10px 12px;border-radius:12px;backdrop-filter: blur(6px);
+      box-shadow: var(--shadow); border:1px solid rgba(255,255,255,0.02);
+    }
+    .search input{background:transparent;border:0;outline:none;color:#fff;width:220px}
 
-        .note-box {
-            background: white;
-            padding: 15px;
-            margin-top: 12px;
-            border-radius: 10px;
-            box-shadow: 0 0 8px #ccc;
-        }
+    .filters {display:flex;gap:8px;align-items:center}
+    .select, .input {background:var(--soft);padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);color:#fff}
+    .select select, .input input{background:transparent;border:0;color:#fff;outline:none}
 
-        .note-title {
-            font-weight: bold;
-            font-size: 18px;
-        }
+    /* notes grid */
+    .grid {display:grid;grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap:14px;margin-top:16px}
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;padding:14px;box-shadow: var(--shadow);border:1px solid rgba(255,255,255,0.03);
+      transform-origin: top center;overflow:hidden;
+    }
+    .title {font-weight:600;color: #fff;font-size:16px;margin-bottom:6px}
+    .time {font-size:12px;color:var(--muted);margin-bottom:8px}
+    .content {color:#e6e6e6;font-size:14px;margin-bottom:10px;max-height:140px;overflow:auto}
+    .tags {display:flex;gap:6px;flex-wrap:wrap}
+    .tag {font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted)}
 
-        .note-time {
-            color: gray;
-            font-size: 12px;
-        }
+    .card-actions{display:flex;gap:8px;justify-content:flex-end}
+    .btn {border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:600}
+    .btn-edit{background:#2baf7a;color:#fff}
+    .btn-delete{background:#ff4b5c;color:#fff}
 
-        textarea, input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 8px;
-        }
+    /* floating + */
+    .fab {
+      position:fixed;right:24px;bottom:28px;width:62px;height:62px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#ffd94d,#ffb700);
+      color:#111;font-size:32px;box-shadow: 0 10px 30px rgba(0,0,0,0.6);cursor:pointer;border:4px solid rgba(255,255,255,0.06);
+    }
 
-        button {
-            margin-top: 10px;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 8px;
-            background: #3498db;
-            color: white;
-            cursor: pointer;
-        }
+    /* editor modal (slide-down) */
+    .editor {
+      position:fixed;left:50%;transform:translateX(-50%) translateY(-120%);top:8%;width:92%;max-width:820px;background:var(--card);border-radius:16px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,0.7);
+      transition: transform 300ms cubic-bezier(.2,.9,.2,1), opacity 220ms;opacity:0;z-index:999;
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .editor.open { transform:translateX(-50%) translateY(0); opacity:1;}
 
-        .btn-delete {
-            background: red;
-        }
-    </style>
+    .editor .toolbar {display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .toolbar button{background:transparent;border:0;color:var(--muted);padding:8px;border-radius:8px;cursor:pointer}
+    .toolbar button.active{color:var(--accent);background:rgba(255,217,77,0.06)}
+
+    .editor .fields{display:flex;gap:12px}
+    .editor input.title{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#fff}
+    .editor .tags-input{width:220px;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#fff}
+
+    .editor .rte {
+      margin-top:10px;border-radius:12px;padding:12px;min-height:120px;background:linear-gradient(180deg,#0b0b0d,#101215); color:#fff;outline:none;border:1px solid rgba(255,255,255,0.02)
+    }
+
+    .editor .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .editor .save{background:var(--accent);padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+
+    /* small helpers */
+    .muted{color:var(--muted);font-size:13px}
+    @media (max-width:480px){
+      .search input{width:120px}
+      .editor{top:6%}
+    }
+  </style>
 </head>
 <body>
-<div class="container">
+  <div class="app">
+    <header>
+      <div>
+        <h1>Notes</h1>
+        <div class="sub muted">iOS Dark • Your private notes</div>
+      </div>
 
-    <h2>📝 My Notes</h2>
+      <div class="controls">
+        <div class="search">
+          🔍 &nbsp;<input id="searchInput" placeholder="Search notes, tags..." />
+        </div>
 
-    <input id="title" placeholder="Note title">
-    <textarea id="content" rows="3" placeholder="Write something..."></textarea>
+        <div class="select">
+          <select id="tagFilter">
+            <option value="">All tags</option>
+          </select>
+        </div>
 
-    <button onclick="addNote()">Add Note</button>
+        <div class="input">
+          <input id="dateFilter" type="date" />
+        </div>
+      </div>
+    </header>
 
-    <hr>
+    <main>
+      <div id="notesGrid" class="grid"></div>
+    </main>
+  </div>
 
-    <div id="notes_list"></div>
+  <!-- floating add -->
+  <div class="fab" id="openEditor">+</div>
 
-</div>
+  <!-- Editor modal -->
+  <div class="editor" id="editor">
+    <div class="toolbar">
+      <button id="boldBtn"><b>B</b></button>
+      <button id="italicBtn"><i>I</i></button>
+      <button id="underlineBtn"><u>U</u></button>
+      <button id="bulletBtn">• List</button>
+      <button id="linkBtn">🔗</button>
+      <div class="muted" style="margin-left:8px">Formatting</div>
+    </div>
+
+    <div class="fields">
+      <input id="noteTitle" class="title" placeholder="Title (optional)" />
+      <input id="noteTags" class="tags-input" placeholder="tags comma-separated" />
+    </div>
+
+    <div id="rte" class="rte" contenteditable="true" placeholder="Start writing..."></div>
+
+    <div class="footer">
+      <div class="muted" id="charCount">0 chars</div>
+      <div>
+        <button class="save" id="saveNoteBtn">Save</button>
+        <button class="btn" id="closeEditor" style="margin-left:8px;background:transparent;color:var(--muted)">Cancel</button>
+      </div>
+    </div>
+  </div>
 
 <script>
-    async function loadNotes() {
-        const res = await fetch("/get_notes");
-        const notes = await res.json();
+  // state
+  let NOTES = [];     // fetched notes
+  let editingId = null;
 
-        const list = document.getElementById("notes_list");
-        list.innerHTML = "";
+  // elements
+  const editor = document.getElementById('editor');
+  const openEditorBtn = document.getElementById('openEditor');
+  const closeEditorBtn = document.getElementById('closeEditor');
+  const saveNoteBtn = document.getElementById('saveNoteBtn');
+  const notesGrid = document.getElementById('notesGrid');
+  const searchInput = document.getElementById('searchInput');
+  const tagFilter = document.getElementById('tagFilter');
+  const dateFilter = document.getElementById('dateFilter');
+  const noteTitle = document.getElementById('noteTitle');
+  const noteTags = document.getElementById('noteTags');
+  const rte = document.getElementById('rte');
+  const charCount = document.getElementById('charCount');
 
-        notes.forEach(n => {
-            list.innerHTML += `
-                <div class="note-box">
-                    <div class="note-title">${n.title}</div>
-                    <div class="note-time">${n.timestamp}</div>
-                    <p>${n.content}</p>
+  // toolbar
+  document.getElementById('boldBtn').addEventListener('click', ()=> document.execCommand('bold'));
+  document.getElementById('italicBtn').addEventListener('click', ()=> document.execCommand('italic'));
+  document.getElementById('underlineBtn').addEventListener('click', ()=> document.execCommand('underline'));
+  document.getElementById('bulletBtn').addEventListener('click', ()=> document.execCommand('insertUnorderedList'));
+  document.getElementById('linkBtn').addEventListener('click', ()=>{
+    const url = prompt("Enter URL (include https://)");
+    if (url) document.execCommand('createLink', false, url);
+  });
 
-                    <button onclick="editNote('${n.id}', '${n.title}', \`${n.content}\`)">Edit</button>
-                    <button class="btn-delete" onclick="deleteNote('${n.id}')">Delete</button>
-                </div>
-            `;
-        });
+  // editor open/close
+  openEditorBtn.addEventListener('click', ()=>{
+    editingId = null;
+    noteTitle.value = '';
+    noteTags.value = '';
+    rte.innerHTML = '';
+    editor.classList.add('open');
+    setTimeout(()=> rte.focus(), 220);
+  });
+  closeEditorBtn.addEventListener('click', ()=> editor.classList.remove('open'));
+
+  // char count
+  rte.addEventListener('input', ()=> charCount.textContent = rte.innerText.length + " chars");
+
+  // load notes from server
+  async function fetchNotes(){
+    const res = await fetch('/get_notes');
+    NOTES = await res.json();
+    populateTagFilter();
+    renderNotes();
+  }
+
+  // populate tag filter options
+  function populateTagFilter(){
+    const allTags = new Set();
+    NOTES.forEach(n => (n.tags||[]).forEach(t => allTags.add(t)));
+    tagFilter.innerHTML = '<option value="">All tags</option>';
+    Array.from(allTags).sort().forEach(t => {
+      const opt = document.createElement('option'); opt.value = t; opt.textContent = t; tagFilter.appendChild(opt);
+    });
+  }
+
+  // render notes with search & filters (animated)
+  function renderNotes(){
+    const q = (searchInput.value||'').toLowerCase();
+    const selectedTag = tagFilter.value;
+    const dateVal = dateFilter.value; // YYYY-MM-DD
+
+    notesGrid.innerHTML = '';
+
+    const filtered = NOTES.filter(n => {
+      if (selectedTag && !(n.tags||[]).includes(selectedTag)) return false;
+      if (dateVal && !n.timestamp.startsWith(dateVal)) {
+         // timestamp format 'YYYY-MM-DD HH:MM:SS' so startsWith works
+         return false;
+      }
+      if (!q) return true;
+      // search title, content (strip html), tags
+      const text = (n.title + ' ' + (n.content.replace(/<[^>]*>?/gm, '') || '') + ' ' + (n.tags||[]).join(' ')).toLowerCase();
+      return text.includes(q);
+    });
+
+    filtered.forEach(n => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.style.animation = 'slideDown .28s ease';
+      div.innerHTML = `
+        <div class="title">${escapeHtml(n.title || '')}</div>
+        <div class="time">${n.timestamp}</div>
+        <div class="content">${n.content || ''}</div>
+        <div class="tags">${(n.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+        <div class="card-actions" style="margin-top:10px">
+          <button class="btn btn-edit" onclick='openEdit("${n.id}")'>Edit</button>
+          <button class="btn btn-delete" onclick='deleteNote("${n.id}")'>Delete</button>
+        </div>
+      `;
+      notesGrid.appendChild(div);
+    });
+
+    // tiny animation keyframes inserted once:
+    if (!document.getElementById('notes-anim')) {
+      const s = document.createElement('style'); s.id='notes-anim';
+      s.innerHTML = '@keyframes slideDown{from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:translateY(0)}}';
+      document.head.appendChild(s);
+    }
+  }
+
+  // helpers
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+
+  // open edit modal prefilled
+  function openEdit(id){
+    const n = NOTES.find(x=>x.id===id);
+    if(!n) return;
+    editingId = id;
+    noteTitle.value = n.title || '';
+    noteTags.value = (n.tags||[]).join(', ');
+    rte.innerHTML = n.content || '';
+    editor.classList.add('open');
+    setTimeout(()=> rte.focus(), 220);
+  }
+
+  // add / save note
+  saveNoteBtn.addEventListener('click', async ()=>{
+    const title = noteTitle.value.trim();
+    const rawTags = noteTags.value.split(',').map(t=>t.trim()).filter(Boolean);
+    const content = rte.innerHTML.trim();
+
+    if(editingId){
+      await fetch('/edit_note', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id: editingId, title, content, tags: rawTags })
+      });
+    } else {
+      await fetch('/add_note', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ title, content, tags: rawTags })
+      });
     }
 
-    async function addNote() {
-        const title = document.getElementById("title").value;
-        const content = document.getElementById("content").value;
+    editor.classList.remove('open');
+    await fetchNotes();
+  });
 
-        await fetch("/add_note", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({title, content})
-        });
+  // delete
+  async function deleteNote(id){
+    if(!confirm('Delete this note?')) return;
+    await fetch('/delete_note', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id })
+    });
+    await fetchNotes();
+  }
 
-        document.getElementById("title").value = "";
-        document.getElementById("content").value = "";
+  // search & filters events
+  searchInput.addEventListener('input', ()=> renderNotes());
+  tagFilter.addEventListener('change', ()=> renderNotes());
+  dateFilter.addEventListener('change', ()=> renderNotes());
 
-        loadNotes();
-    }
-
-    function editNote(id, title, content) {
-        const newTitle = prompt("Edit Title:", title);
-        const newContent = prompt("Edit Content:", content);
-
-        fetch("/edit_note", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({id, title: newTitle, content: newContent})
-        }).then(() => loadNotes());
-    }
-
-    async function deleteNote(id) {
-        await fetch("/delete_note", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({id})
-        });
-
-        loadNotes();
-    }
-
-    loadNotes();
+  // init
+  fetchNotes();
 </script>
-
 </body>
 </html>
 """
@@ -1129,52 +1309,73 @@ def save_transaction():
         }), 201
 
 
-@app.route("/add_note", methods=["POST"])
-def add_note():
-    data = request.json
-    note = {
-        "title": data.get("title"),
-        "content": data.get("content"),
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
-    }
-    notes_collection.insert_one(note)
-    return {"status": "success"}
-
-
 @app.route("/get_notes", methods=["GET"])
+@login_required
 def get_notes():
     notes = []
-    for n in notes_collection.find().sort("_id", -1):
+    for n in notes_collection.find().sort("timestamp", -1):
         notes.append({
             "id": str(n["_id"]),
-            "title": n["title"],
-            "content": n["content"],
-            "timestamp": n["timestamp"]
+            "title": n.get("title", ""),
+            "content": n.get("content", ""),
+            "tags": n.get("tags", []),
+            "timestamp": n.get("timestamp", "")
         })
     return jsonify(notes)
 
 
+@app.route("/add_note", methods=["POST"])
+@login_required
+def add_note():
+    data = request.json
+    title = data.get("title", "").strip()
+    content = data.get("content", "").strip()   # HTML from contenteditable
+    tags = data.get("tags", [])                 # list of strings
+
+    if not content and not title:
+        return jsonify({"status": "fail", "message": "Note is empty"}), 400
+
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    notes_collection.insert_one({
+        "title": title,
+        "content": content,
+        "tags": tags,
+        "timestamp": ts
+    })
+    return jsonify({"status": "success"})
+
+
 @app.route("/edit_note", methods=["POST"])
+@login_required
 def edit_note():
     data = request.json
     note_id = data.get("id")
+    if not note_id:
+        return jsonify({"status": "fail", "message": "Missing id"}), 400
 
-    notes_collection.update_one(
-        {"_id": ObjectId(note_id)},
-        {"$set": {
-            "title": data.get("title"),
-            "content": data.get("content")
-        }}
-    )
-    return {"status": "success"}
+    update = {}
+    if "title" in data:
+        update["title"] = data.get("title", "")
+    if "content" in data:
+        update["content"] = data.get("content", "")
+    if "tags" in data:
+        update["tags"] = data.get("tags", [])
+
+    update["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    notes_collection.update_one({"_id": ObjectId(note_id)}, {"$set": update})
+    return jsonify({"status": "success"})
 
 
 @app.route("/delete_note", methods=["POST"])
+@login_required
 def delete_note():
     data = request.json
     note_id = data.get("id")
+    if not note_id:
+        return jsonify({"status": "fail", "message": "Missing id"}), 400
     notes_collection.delete_one({"_id": ObjectId(note_id)})
-    return {"status": "success"}
+    return jsonify({"status": "success"})
     
 @app.route('/logout')
 def logout():
