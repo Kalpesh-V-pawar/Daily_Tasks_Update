@@ -871,51 +871,139 @@ Paisa_page = """
 Notes_page = """
 <html>
 <head>
-<title>Notes</title>
+    <meta charset="UTF-8">
+    <title>My Notes</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f5f6fa;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .note-box {
+            background: white;
+            padding: 15px;
+            margin-top: 12px;
+            border-radius: 10px;
+            box-shadow: 0 0 8px #ccc;
+        }
+
+        .note-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .note-time {
+            color: gray;
+            font-size: 12px;
+        }
+
+        textarea, input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn-delete {
+            background: red;
+        }
+    </style>
 </head>
 <body>
-<h2>Your Notes</h2>
+<div class="container">
 
-<form id="noteForm">
-    <textarea id="noteData" rows="4" cols="40" placeholder="Write note here..."></textarea><br><br>
-    <button type="submit">Add Note</button>
-</form>
+    <h2>📝 My Notes</h2>
 
-<div id="message"></div>
+    <input id="title" placeholder="Note title">
+    <textarea id="content" rows="3" placeholder="Write something..."></textarea>
 
-<h3>Saved Notes:</h3>
-<div id="notesList"></div>
+    <button onclick="addNote()">Add Note</button>
+
+    <hr>
+
+    <div id="notes_list"></div>
+
+</div>
 
 <script>
-async function loadNotes() {
-    const res = await fetch('/get_notes');
-    const notes = await res.json();
-    document.getElementById("notesList").innerHTML = notes.map(n =>
-        `<p>${n.note} <button onclick="deleteNote('${n._id}')">Delete</button></p>`
-    ).join("");
-}
+    async function loadNotes() {
+        const res = await fetch("/get_notes");
+        const notes = await res.json();
 
-loadNotes();
+        const list = document.getElementById("notes_list");
+        list.innerHTML = "";
 
-document.getElementById("noteForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const note = document.getElementById('noteData').value;
+        notes.forEach(n => {
+            list.innerHTML += `
+                <div class="note-box">
+                    <div class="note-title">${n.title}</div>
+                    <div class="note-time">${n.timestamp}</div>
+                    <p>${n.content}</p>
 
-    const res = await fetch('/add_note', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({note})
-    });
+                    <button onclick="editNote('${n.id}', '${n.title}', \`${n.content}\`)">Edit</button>
+                    <button class="btn-delete" onclick="deleteNote('${n.id}')">Delete</button>
+                </div>
+            `;
+        });
+    }
 
-    const result = await res.json();
-    document.getElementById('message').innerHTML = result.message;
+    async function addNote() {
+        const title = document.getElementById("title").value;
+        const content = document.getElementById("content").value;
+
+        await fetch("/add_note", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({title, content})
+        });
+
+        document.getElementById("title").value = "";
+        document.getElementById("content").value = "";
+
+        loadNotes();
+    }
+
+    function editNote(id, title, content) {
+        const newTitle = prompt("Edit Title:", title);
+        const newContent = prompt("Edit Content:", content);
+
+        fetch("/edit_note", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({id, title: newTitle, content: newContent})
+        }).then(() => loadNotes());
+    }
+
+    async function deleteNote(id) {
+        await fetch("/delete_note", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({id})
+        });
+
+        loadNotes();
+    }
+
     loadNotes();
-});
-
-async function deleteNote(id) {
-    await fetch('/delete_note/' + id, {method: 'DELETE'});
-    loadNotes();
-}
 </script>
 
 </body>
@@ -1041,36 +1129,53 @@ def save_transaction():
         }), 201
 
 
-@app.route('/add_note', methods=['POST'])
-@login_required
+@app.route("/add_note", methods=["POST"])
 def add_note():
     data = request.json
-    note = data.get("note")
+    note = {
+        "title": data.get("title"),
+        "content": data.get("content"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+    }
+    notes_collection.insert_one(note)
+    return {"status": "success"}
 
-    notes_collection.insert_one({
-        "username": session['username'],
-        "note": note
-    })
 
-    return jsonify({"message": "Note added!"})
-
-@app.route('/get_notes')
-@login_required
+@app.route("/get_notes", methods=["GET"])
 def get_notes():
-    username = session['username']
-    notes = list(notes_collection.find({"username": username}, {"_id": 1, "note": 1}))
-    for n in notes:
-        n["_id"] = str(n["_id"])
+    notes = []
+    for n in notes_collection.find().sort("_id", -1):
+        notes.append({
+            "id": str(n["_id"]),
+            "title": n["title"],
+            "content": n["content"],
+            "timestamp": n["timestamp"]
+        })
     return jsonify(notes)
 
-from bson import ObjectId
 
-@app.route('/delete_note/<note_id>', methods=['DELETE'])
-@login_required
-def delete_note(note_id):
+@app.route("/edit_note", methods=["POST"])
+def edit_note():
+    data = request.json
+    note_id = data.get("id")
+
+    notes_collection.update_one(
+        {"_id": ObjectId(note_id)},
+        {"$set": {
+            "title": data.get("title"),
+            "content": data.get("content")
+        }}
+    )
+    return {"status": "success"}
+
+
+@app.route("/delete_note", methods=["POST"])
+def delete_note():
+    data = request.json
+    note_id = data.get("id")
     notes_collection.delete_one({"_id": ObjectId(note_id)})
-    return jsonify({"message": "Deleted"})
-
+    return {"status": "success"}
+    
 @app.route('/logout')
 def logout():
     session.clear()
