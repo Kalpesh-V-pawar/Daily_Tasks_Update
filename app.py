@@ -1309,24 +1309,30 @@ def save_transaction():
         }), 201
 
 
-@app.route("/get_notes", methods=["GET"])
-@login_required
-def get_notes():
-    notes = []
-    for n in notes_collection.find().sort("timestamp", -1):
-        notes.append({
-            "id": str(n["_id"]),
-            "title": n.get("title", ""),
-            "content": n.get("content", ""),
-            "tags": n.get("tags", []),
-            "timestamp": n.get("timestamp", "")
-        })
-    return jsonify(notes)
 
 
 def serialize_note(note):
     note["_id"] = str(note["_id"])
     return note
+
+@app.route("/get_notes", methods=["GET"])
+@login_required
+def get_notes():
+    notes = list(notes_collection.find().sort("timestamp", -1))
+    notes = [serialize(n) for n in notes]
+    return jsonify(notes)
+
+@app.route("/get_notes", methods=["GET"])
+@login_required
+def get_notes():
+    notes = list(notes_collection.find().sort("timestamp", -1))
+
+    # Convert ObjectId → string
+    for n in notes:
+        n["id"] = str(n["_id"])
+        del n["_id"]
+
+    return jsonify(notes)
 
 
 @app.route("/add_note", methods=["POST"])
