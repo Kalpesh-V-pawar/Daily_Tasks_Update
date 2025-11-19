@@ -1323,6 +1323,9 @@ def serialize_note(note):
 @app.route("/get_notes", methods=["GET"])
 @login_required
 def get_notes():
+
+    india = pytz.timezone("Asia/Kolkata")
+    timestamp = datetime.now(india).strftime("%d-%m-%Y %H:%M")
     notes = list(notes_collection.find().sort("timestamp", -1))
 
     # Convert ObjectId → string
@@ -1345,7 +1348,9 @@ def add_note():
     if not title and not content:
         return jsonify({"status": "fail", "message": "Note is empty"}), 400
 
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    india = pytz.timezone("Asia/Kolkata")
+    ts = datetime.now(india).strftime("%d-%m-%Y %H:%M")
 
     result = notes_collection.insert_one({
         "title": title,
@@ -1373,8 +1378,11 @@ def edit_note():
     except Exception:
         return jsonify({"status": "fail", "message": "Invalid ObjectId format"}), 400
 
+
+    india = pytz.timezone("Asia/Kolkata")
     update = {
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        "timestamp": datetime.now(india).strftime("%Y-%m-%d %H:%M:%S")
     }
 
     if "title" in data:
