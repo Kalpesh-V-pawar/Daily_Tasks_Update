@@ -1165,17 +1165,15 @@ Notes_page = """
       const content = rte.innerHTML.trim();
       const rawTags = noteTags.value.split(",").map(t => t.trim()).filter(t => t);
       const fileInput = document.getElementById("noteFile");
+      
     
       const formData = new FormData();
       formData.append("title", title);
       formData.append("content", content);
       formData.append("tags", JSON.stringify(rawTags));
-      if (noteFile.files[0]) {
-        formData.append("file", noteFile.files[0]);
-      } 
-      // File present?
-      if (fileInput && fileInput.files.length > 0) {
-        formData.append("file", fileInput.files[0]);
+
+      if (fileInput && fileInput.files[0]) {
+         formData.append("file", fileInput.files[0]);
       }
     
       if (editingId) {
@@ -1372,24 +1370,16 @@ def add_note():
     india = pytz.timezone("Asia/Kolkata")
     ts = datetime.now(india).strftime("%d-%m-%Y %H:%M")
 
-    # Get fields (works for normal form-data)
-    title = request.form.get("title", "").strip()
-    content = request.form.get("content", "").strip()
+    # Read fields
+    title = request.form.get("title", "")
+    content = request.form.get("content", "")
+    tags = json.loads(request.form.get("tags", "[]"))
 
-    tags_raw = request.form.get("tags", "")
-    if tags_raw:
-        try:
-            tags = json.loads(tags_raw)
-        except:
-            tags = []
-    else:
-        tags = []
-
-    # Handle file upload
     file_url = None
 
-    file = request.files.get("file")
-    if file:
+    # Check if file exists
+    if "file" in request.files:
+        file = request.files["file"]
         encoded = base64.b64encode(file.read()).decode("utf-8")
 
         response = requests.post(
@@ -1401,15 +1391,11 @@ def add_note():
             }
         )
 
-        try:
-            result = response.json()
-            if result.get("status") == "success":
-                file_url = result.get("url")
-        except:
-            return jsonify({"status": "fail", "message": "Drive upload error"}), 500
+        result = response.json()
+        if result.get("status") == "success":
+            file_url = result.get("url")
 
-    # Insert into Mongo
-    result = notes_collection.insert_one({
+    notes_collection.insert_one({
         "title": title,
         "content": content,
         "tags": tags,
@@ -1417,7 +1403,7 @@ def add_note():
         "attachment": file_url
     })
 
-    return jsonify({"status": "success", "id": str(result.inserted_id)})
+    return jsonify({"status": "success"})
 
 
 @app.route("/edit_note", methods=["POST"])
