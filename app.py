@@ -1367,9 +1367,12 @@ def edit_note():
         return jsonify({"status": "fail", "message": "Missing id"}), 400
 
     try:
-        oid = ObjectId(note_id)
-    except:
-        return jsonify({"status": "fail", "message": "Invalid ObjectId"}), 400
+            from bson.objectid import ObjectId
+    
+    try:
+        oid = ObjectId(str(note_id).strip())
+    except Exception as e:
+        return jsonify({"status": "fail", "message": "Invalid ObjectId format"}), 400
 
     update = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1398,9 +1401,9 @@ def delete_note():
         return jsonify({"status": "fail", "message": "Missing id"}), 400
 
     try:
-        oid = ObjectId(note_id)
+        oid = ObjectId(str(note_id).strip())
     except:
-        return jsonify({"status": "fail", "message": "Invalid ObjectId"}), 400
+        return jsonify({"status": "fail", "message": "Invalid ObjectId format"}), 400
 
     result = notes_collection.delete_one({"_id": oid})
 
