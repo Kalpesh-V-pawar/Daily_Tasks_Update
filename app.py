@@ -1353,7 +1353,7 @@ def serialize_note(note):
 def get_notes():
 
     india = pytz.timezone("Asia/Kolkata")
-    timestamp = datetime.now(india).strftime("%d-%m-%Y %H:%M")
+    timestamp = datetime.now(india)..strftime("%Y-%m-%d %H:%M:%S")
     notes = list(notes_collection.find().sort("timestamp", -1))
 
     # Convert ObjectId → string
@@ -1409,34 +1409,52 @@ def add_note():
 @app.route("/edit_note", methods=["POST"])
 @login_required
 def edit_note():
-    data = request.json
-    note_id = data.get("id")
+    # Read form fields
+    note_id = request.form.get("id")
 
     if not note_id:
         return jsonify({"status": "fail", "message": "Missing id"}), 400
 
     try:
         oid = ObjectId(str(note_id).strip())
-    except Exception:
-        return jsonify({"status": "fail", "message": "Invalid ObjectId format"}), 400
-
+    except:
+        return jsonify({"status": "fail", "message": "Invalid ObjectId"}), 400
 
     india = pytz.timezone("Asia/Kolkata")
+
     update = {
-        
-        "timestamp": datetime.now(india).strftime("%Y-%m-%d %H:%M:%S")
+        "title": request.form.get("title", ""),
+        "content": request.form.get("content", ""),
+        "tags": json.loads(request.form.get("tags", "[]")),
+        "timestamp": datetime.now(india).strftime("%d-%m-%Y %H:%M")
     }
 
-    if "title" in data:
-        update["title"] = data["title"]
-    if "content" in data:
-        update["content"] = data["content"]
-    if "tags" in data:
-        update["tags"] = data["tags"]
+    file_url = None
 
+    # Check for uploaded file
+    if "file" in request.files:
+        file = request.files["file"]
+        encoded = base64.b64encode(file.read()).decode("utf-8")
+
+        response = requests.post(
+            GOOGLE_WEBAPP_URL,
+            data={
+                "filename": file.filename,
+                "mimeType": file.mimetype,
+                "file": encoded
+            }
+        )
+
+        result = response.json()
+        if result.get("status") == "success":
+            file_url = result.get("url")
+            update["attachment"] = file_url  # Update attachment
+
+    # Save in MongoDB
     notes_collection.update_one({"_id": oid}, {"$set": update})
 
     return jsonify({"status": "success"})
+
 
 
 @app.route("/delete_note", methods=["POST"])
