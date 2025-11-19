@@ -1367,7 +1367,7 @@ def get_notes():
 @login_required
 def add_note():
     india = pytz.timezone("Asia/Kolkata")
-    ts = datetime.now(india).strftime("%d-%m-%Y %H:%M")
+    ts = datetime.now(india).strftime("%Y-%m-%d %H:%M")
 
     # Read fields
     title = request.form.get("title", "")
@@ -1379,20 +1379,19 @@ def add_note():
     # Check if file exists
     if "file" in request.files:
         file = request.files["file"]
-        encoded = base64.b64encode(file.read()).decode("utf-8")
-
-        response = requests.post(
-            GOOGLE_WEBAPP_URL,
-            data={
-                "filename": file.filename,
-                "mimeType": file.mimetype,
-                "file": encoded
-            }
-        )
-
-        result = response.json()
-        if result.get("status") == "success":
-            file_url = result.get("url")
+        if file and file.filename:  # Check if file actually selected
+            encoded = base64.b64encode(file.read()).decode("utf-8")
+            response = requests.post(
+                GOOGLE_WEBAPP_URL,
+                data={
+                    "filename": file.filename,
+                    "mimeType": file.mimetype,
+                    "file": encoded
+                }
+            )
+            result = response.json()
+            if result.get("status") == "success":
+                file_url = result.get("url")
 
     notes_collection.insert_one({
         "title": title,
@@ -1425,7 +1424,7 @@ def edit_note():
         "title": request.form.get("title", ""),
         "content": request.form.get("content", ""),
         "tags": json.loads(request.form.get("tags", "[]")),
-        "timestamp": datetime.now(india).strftime("%d-%m-%Y %H:%M")
+        "timestamp": datetime.now(india).strftime("%Y-%m-%d %H:%M")
     }
 
     file_url = None
@@ -1433,21 +1432,20 @@ def edit_note():
     # Check for uploaded file
     if "file" in request.files:
         file = request.files["file"]
-        encoded = base64.b64encode(file.read()).decode("utf-8")
-
-        response = requests.post(
-            GOOGLE_WEBAPP_URL,
-            data={
-                "filename": file.filename,
-                "mimeType": file.mimetype,
-                "file": encoded
-            }
-        )
-
-        result = response.json()
-        if result.get("status") == "success":
-            file_url = result.get("url")
-            update["attachment"] = file_url  # Update attachment
+        if file and file.filename:  # Check if file actually selected
+            encoded = base64.b64encode(file.read()).decode("utf-8")
+            response = requests.post(
+                GOOGLE_WEBAPP_URL,
+                data={
+                    "filename": file.filename,
+                    "mimeType": file.mimetype,
+                    "file": encoded
+                }
+            )
+            result = response.json()
+            if result.get("status") == "success":
+                file_url = result.get("url")
+                update["attachment"] = file_url  # Update attachment
 
     # Save in MongoDB
     notes_collection.update_one({"_id": oid}, {"$set": update})
