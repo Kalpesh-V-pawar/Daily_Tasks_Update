@@ -1170,8 +1170,9 @@ Notes_page = """
       formData.append("title", title);
       formData.append("content", content);
       formData.append("tags", JSON.stringify(rawTags));
-      if (fileInput.files[0]) formData.append("file", fileInput.files[0]);
-    
+      if (noteFile.files[0]) {
+        formData.append("file", noteFile.files[0]);
+      } 
       // File present?
       if (fileInput && fileInput.files.length > 0) {
         formData.append("file", fileInput.files[0]);
@@ -1371,37 +1372,43 @@ def add_note():
     india = pytz.timezone("Asia/Kolkata")
     ts = datetime.now(india).strftime("%d-%m-%Y %H:%M")
 
-    # ---- Get form fields ----
+    # Get fields (works for normal form-data)
     title = request.form.get("title", "").strip()
     content = request.form.get("content", "").strip()
 
-    raw_tags = request.form.get("tags", "[]")
-    try:
-        tags = json.loads(raw_tags)
-    except:
+    tags_raw = request.form.get("tags", "")
+    if tags_raw:
+        try:
+            tags = json.loads(tags_raw)
+        except:
+            tags = []
+    else:
         tags = []
 
+    # Handle file upload
     file_url = None
 
-    # ---- If file uploaded, send to Google Apps Script ----
-    if "file" in request.files:
-        upload_file = request.files["file"]
-        encoded = base64.b64encode(upload_file.read()).decode("utf-8")
+    file = request.files.get("file")
+    if file:
+        encoded = base64.b64encode(file.read()).decode("utf-8")
 
         response = requests.post(
             GOOGLE_WEBAPP_URL,
             data={
-                "filename": upload_file.filename,
-                "mimeType": upload_file.mimetype,
+                "filename": file.filename,
+                "mimeType": file.mimetype,
                 "file": encoded
             }
         )
 
-        result = response.json()
-        if result.get("status") == "success":
-            file_url = result.get("url")
+        try:
+            result = response.json()
+            if result.get("status") == "success":
+                file_url = result.get("url")
+        except:
+            return jsonify({"status": "fail", "message": "Drive upload error"}), 500
 
-    # ---- Save note to MongoDB ----
+    # Insert into Mongo
     result = notes_collection.insert_one({
         "title": title,
         "content": content,
@@ -1410,10 +1417,8 @@ def add_note():
         "attachment": file_url
     })
 
-    return jsonify({
-        "status": "success",
-        "id": str(result.inserted_id)
-    })
+    return jsonify({"status": "success", "id": str(result.inserted_id)})
+
 
 @app.route("/edit_note", methods=["POST"])
 @login_required
