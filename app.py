@@ -1353,7 +1353,7 @@ def serialize_note(note):
 def get_notes():
 
     india = pytz.timezone("Asia/Kolkata")
-    timestamp = datetime.now(india)..strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now(india).strftime("%Y-%m-%d %H:%M:%S")
     notes = list(notes_collection.find().sort("timestamp", -1))
 
     # Convert ObjectId → string
