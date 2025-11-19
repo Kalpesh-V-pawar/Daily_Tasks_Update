@@ -23,6 +23,7 @@ GOOGLE_SCRIPT_URL = os.getenv("GOOGLE_SCRIPT_URL")
 if not GOOGLE_SCRIPT_URL:
     print("Warning: GOOGLE_SCRIPT_URL is not set. Data will only be saved to MongoDB.")
 
+GOOGLE_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw1eEVY9hYlkkiDk6DFWRIBUq1ecojZLFcYC6OoXV4lfucaJE844qcgm-u0IaDyaCYG/exec"
 
 client = MongoClient(mongo_uri)
 db = client['dailyTasks']
@@ -1011,6 +1012,11 @@ Notes_page = """
     <div class="fields">
       <input id="noteTitle" class="title" placeholder="Title (optional)" />
       <input id="noteTags" class="tags-input" placeholder="tags comma-separated" />
+      <div class="filebox" style="margin-top:12px">
+         <label>Attachment:</label>
+         <input id="noteFile" type="file" />
+      </div>
+
     </div>
 
     <div id="rte" class="rte" contenteditable="true" placeholder="Start writing..."></div>
@@ -1110,14 +1116,22 @@ Notes_page = """
       div.className = 'card';
       div.style.animation = 'slideDown .28s ease';
       div.innerHTML = `
-        <div class="title">${escapeHtml(n.title || '')}</div>
-        <div class="time">${n.timestamp}</div>
-        <div class="content">${n.content || ''}</div>
-        <div class="tags">${(n.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
-        <div class="card-actions" style="margin-top:10px">
-          <button class="btn btn-edit" onclick='openEdit("${n.id}")'>Edit</button>
-          <button class="btn btn-delete" onclick='deleteNote("${n.id}")'>Delete</button>
-        </div>
+          <div class="title">${escapeHtml(n.title || '')}</div>
+          <div class="time">${n.timestamp}</div>
+          <div class="content">${n.content || ''}</div>
+        
+          ${n.attachment ? `<div><a href="${n.attachment}" target="_blank">📎 Attachment</a></div>` : ''}
+        
+          <div class="tags">
+            ${(n.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+          </div>
+        
+          <div class="card-actions" style="margin-top:10px">
+            <button class="btn btn-edit" onclick='openEdit("${n.id}")'>Edit</button>
+            <button class="btn btn-delete" onclick='deleteNote("${n.id}")'>Delete</button>
+       </div>
+     
+
       `;
       notesGrid.appendChild(div);
     });
@@ -1146,29 +1160,44 @@ Notes_page = """
   }
 
   // add / save note
-  saveNoteBtn.addEventListener('click', async ()=>{
-    const title = noteTitle.value.trim();
-    const rawTags = noteTags.value.split(',').map(t=>t.trim()).filter(Boolean);
-    const content = rte.innerHTML.trim();
+    saveNoteBtn.addEventListener("click", async () => {
+      const title = noteTitle.value.trim();
+      const content = rte.innerHTML.trim();
+      const rawTags = noteTags.value.split(",").map(t => t.trim()).filter(t => t);
+      const fileInput = document.getElementById("noteFile");
+    
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content);
+      formData.append("tags", JSON.stringify(rawTags));
+      if (fileInput.files[0]) formData.append("file", fileInput.files[0]);
+    
+      // File present?
+      if (fileInput && fileInput.files.length > 0) {
+        formData.append("file", fileInput.files[0]);
+      }
+    
+      if (editingId) {
+        formData.append("id", editingId);
+    
+        await fetch("/edit_note", {
+          method: "POST",
+          credentials: "include",
+          body: formData
+        });
+    
+      } else {
+        await fetch("/add_note", {
+          method: "POST",
+          credentials: "include",
+          body: formData
+        });
+      }
+    
+      editor.classList.remove("open");
+      await fetchNotes();
+    });
 
-    if(editingId){
-      await fetch('/edit_note', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        credentials: "include",
-        body: JSON.stringify({ id: editingId, title, content, tags: rawTags })
-      });
-    } else {
-      await fetch('/add_note', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ title, content, tags: rawTags })
-      });
-    }
-
-    editor.classList.remove('open');
-    await fetchNotes();
-  });
 
   // delete
   async function deleteNote(id){
@@ -1339,29 +1368,51 @@ def get_notes():
 @app.route("/add_note", methods=["POST"])
 @login_required
 def add_note():
-    data = request.json
-
-    title = data.get("title", "").strip()
-    content = data.get("content", "").strip()
-    tags = data.get("tags", [])
-
-    if not title and not content:
-        return jsonify({"status": "fail", "message": "Note is empty"}), 400
-
-
     india = pytz.timezone("Asia/Kolkata")
     ts = datetime.now(india).strftime("%d-%m-%Y %H:%M")
 
+    # ---- Get form fields ----
+    title = request.form.get("title", "").strip()
+    content = request.form.get("content", "").strip()
+
+    raw_tags = request.form.get("tags", "[]")
+    try:
+        tags = json.loads(raw_tags)
+    except:
+        tags = []
+
+    file_url = None
+
+    # ---- If file uploaded, send to Google Apps Script ----
+    if "file" in request.files:
+        upload_file = request.files["file"]
+        encoded = base64.b64encode(upload_file.read()).decode("utf-8")
+
+        response = requests.post(
+            GOOGLE_WEBAPP_URL,
+            data={
+                "filename": upload_file.filename,
+                "mimeType": upload_file.mimetype,
+                "file": encoded
+            }
+        )
+
+        result = response.json()
+        if result.get("status") == "success":
+            file_url = result.get("url")
+
+    # ---- Save note to MongoDB ----
     result = notes_collection.insert_one({
         "title": title,
         "content": content,
         "tags": tags,
-        "timestamp": ts
+        "timestamp": ts,
+        "attachment": file_url
     })
 
     return jsonify({
         "status": "success",
-        "id": str(result.inserted_id)   # IMPORTANT!!!
+        "id": str(result.inserted_id)
     })
 
 @app.route("/edit_note", methods=["POST"])
@@ -1417,6 +1468,17 @@ def delete_note():
         return jsonify({"status": "fail", "message": "Note not found"}), 404
 
     return jsonify({"status": "success"})
+
+def upload_to_drive(file):
+    files = {
+        'file': (file.filename, file.stream, file.mimetype)
+    }
+    
+    resp = requests.post(GOOGLE_WEBAPP_URL, files=files)
+    
+    if resp.status_code == 200:
+        return resp.text.strip()   # Contains Drive URL returned by Apps Script
+    return None
 
     
 @app.route('/logout')
