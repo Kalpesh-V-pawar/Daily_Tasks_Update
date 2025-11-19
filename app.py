@@ -1366,93 +1366,103 @@ def get_notes():
 @app.route("/add_note", methods=["POST"])
 @login_required
 def add_note():
-    india = pytz.timezone("Asia/Kolkata")
-    ts = datetime.now(india).strftime("%Y-%m-%d %H:%M")
-
-    # Read fields
-    title = request.form.get("title", "")
-    content = request.form.get("content", "")
-    tags = json.loads(request.form.get("tags", "[]"))
-
-    file_url = None
-
-    # Check if file exists
-    if "file" in request.files:
-        file = request.files["file"]
-        if file and file.filename:  # Check if file actually selected
-            encoded = base64.b64encode(file.read()).decode("utf-8")
-            response = requests.post(
-                GOOGLE_WEBAPP_URL,
-                data={
-                    "filename": file.filename,
-                    "mimeType": file.mimetype,
-                    "file": encoded
-                }
-            )
-            result = response.json()
-            if result.get("status") == "success":
-                file_url = result.get("url")
-
-    notes_collection.insert_one({
-        "title": title,
-        "content": content,
-        "tags": tags,
-        "timestamp": ts,
-        "attachment": file_url
-    })
-
-    return jsonify({"status": "success"})
+    try:
+        india = pytz.timezone("Asia/Kolkata")
+        ts = datetime.now(india).strftime("%Y-%m-%d %H:%M")
+        
+        # Read fields
+        title = request.form.get("title", "")
+        content = request.form.get("content", "")
+        tags = json.loads(request.form.get("tags", "[]"))
+        
+        file_url = None
+        
+        # Check if file exists and has content
+        if "file" in request.files:
+            file = request.files["file"]
+            if file and file.filename:
+                encoded = base64.b64encode(file.read()).decode("utf-8")
+                response = requests.post(
+                    GOOGLE_WEBAPP_URL,
+                    data={
+                        "filename": file.filename,
+                        "mimeType": file.mimetype,
+                        "file": encoded
+                    }
+                )
+                result = response.json()
+                if result.get("status") == "success":
+                    file_url = result.get("url")
+        
+        notes_collection.insert_one({
+            "title": title,
+            "content": content,
+            "tags": tags,
+            "timestamp": ts,
+            "attachment": file_url
+        })
+        
+        return jsonify({"status": "success"})
+    
+    except Exception as e:
+        print(f"ERROR in add_note: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/edit_note", methods=["POST"])
 @login_required
 def edit_note():
-    # Read form fields
-    note_id = request.form.get("id")
-
-    if not note_id:
-        return jsonify({"status": "fail", "message": "Missing id"}), 400
-
     try:
-        oid = ObjectId(str(note_id).strip())
-    except:
-        return jsonify({"status": "fail", "message": "Invalid ObjectId"}), 400
-
-    india = pytz.timezone("Asia/Kolkata")
-
-    update = {
-        "title": request.form.get("title", ""),
-        "content": request.form.get("content", ""),
-        "tags": json.loads(request.form.get("tags", "[]")),
-        "timestamp": datetime.now(india).strftime("%Y-%m-%d %H:%M")
-    }
-
-    file_url = None
-
-    # Check for uploaded file
-    if "file" in request.files:
-        file = request.files["file"]
-        if file and file.filename:  # Check if file actually selected
-            encoded = base64.b64encode(file.read()).decode("utf-8")
-            response = requests.post(
-                GOOGLE_WEBAPP_URL,
-                data={
-                    "filename": file.filename,
-                    "mimeType": file.mimetype,
-                    "file": encoded
-                }
-            )
-            result = response.json()
-            if result.get("status") == "success":
-                file_url = result.get("url")
-                update["attachment"] = file_url  # Update attachment
-
-    # Save in MongoDB
-    notes_collection.update_one({"_id": oid}, {"$set": update})
-
-    return jsonify({"status": "success"})
-
-
+        # Read form fields
+        note_id = request.form.get("id")
+        if not note_id:
+            return jsonify({"status": "fail", "message": "Missing id"}), 400
+        
+        try:
+            oid = ObjectId(str(note_id).strip())
+        except:
+            return jsonify({"status": "fail", "message": "Invalid ObjectId"}), 400
+        
+        india = pytz.timezone("Asia/Kolkata")
+        update = {
+            "title": request.form.get("title", ""),
+            "content": request.form.get("content", ""),
+            "tags": json.loads(request.form.get("tags", "[]")),
+            "timestamp": datetime.now(india).strftime("%Y-%m-%d %H:%M")
+        }
+        
+        file_url = None
+        
+        # Check for uploaded file
+        if "file" in request.files:
+            file = request.files["file"]
+            if file and file.filename:
+                encoded = base64.b64encode(file.read()).decode("utf-8")
+                response = requests.post(
+                    GOOGLE_WEBAPP_URL,
+                    data={
+                        "filename": file.filename,
+                        "mimeType": file.mimetype,
+                        "file": encoded
+                    }
+                )
+                result = response.json()
+                if result.get("status") == "success":
+                    file_url = result.get("url")
+                    update["attachment"] = file_url
+        
+        # Save in MongoDB
+        notes_collection.update_one({"_id": oid}, {"$set": update})
+        
+        return jsonify({"status": "success"})
+    
+    except Exception as e:
+        print(f"ERROR in edit_note: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/delete_note", methods=["POST"])
 @login_required
