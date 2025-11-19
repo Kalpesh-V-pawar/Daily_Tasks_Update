@@ -1387,9 +1387,13 @@ def add_note():
                 response = requests.post(
                     GOOGLE_WEBAPP_URL,
                     data={
-                        "filename": file.filename,
-                        "mimeType": file.mimetype,
-                        "file": encoded
+                        "filename": file.filename if file and file.filename else "",
+                        "mimeType": file.mimetype if file and file.filename else "",
+                        "file": encoded if file and file.filename else "",
+                        "title": title,
+                        "content": content,
+                        "tags": json.dumps(tags),
+                        "timestamp": ts
                     }
                 )
                 result = response.json()
