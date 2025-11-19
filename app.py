@@ -1315,12 +1315,6 @@ def serialize_note(note):
     note["_id"] = str(note["_id"])
     return note
 
-@app.route("/get_notes", methods=["GET"])
-@login_required
-def get_notes():
-    notes = list(notes_collection.find().sort("timestamp", -1))
-    notes = [serialize(n) for n in notes]
-    return jsonify(notes)
 
 @app.route("/get_notes", methods=["GET"])
 @login_required
