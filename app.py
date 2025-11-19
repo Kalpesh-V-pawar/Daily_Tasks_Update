@@ -7,6 +7,8 @@ from datetime import datetime
 import requests
 import pytz
 from flask import session
+from bson.objectid import ObjectId
+
 
 
 app = Flask(__name__)
@@ -1367,11 +1369,8 @@ def edit_note():
         return jsonify({"status": "fail", "message": "Missing id"}), 400
 
     try:
-            from bson.objectid import ObjectId
-    
-    try:
         oid = ObjectId(str(note_id).strip())
-    except Exception as e:
+    except Exception:
         return jsonify({"status": "fail", "message": "Invalid ObjectId format"}), 400
 
     update = {
@@ -1388,7 +1387,6 @@ def edit_note():
     notes_collection.update_one({"_id": oid}, {"$set": update})
 
     return jsonify({"status": "success"})
-
 
 
 @app.route("/delete_note", methods=["POST"])
