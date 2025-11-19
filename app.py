@@ -1153,6 +1153,7 @@ Notes_page = """
       await fetch('/edit_note', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
+        credentials: "include",
         body: JSON.stringify({ id: editingId, title, content, tags: rawTags })
       });
     } else {
@@ -1173,6 +1174,7 @@ Notes_page = """
     await fetch('/delete_note', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
+      credentials: "include",
       body: JSON.stringify({ id })
     });
     await fetchNotes();
