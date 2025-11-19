@@ -1384,18 +1384,31 @@ def add_note():
             file = request.files["file"]
             if file and file.filename:
                 encoded = base64.b64encode(file.read()).decode("utf-8")
-                response = requests.post(
-                    GOOGLE_WEBAPP_URL,
-                    data={
-                        "filename": file.filename if file and file.filename else "",
-                        "mimeType": file.mimetype if file and file.filename else "",
-                        "file": encoded if file and file.filename else "",
-                        "title": title,
-                        "content": content,
-                        "tags": json.dumps(tags),
-                        "timestamp": ts
-                    }
-                )
+                # Prepare data to send
+                file_obj = None
+                if "file" in request.files:
+                    file_obj = request.files["file"]
+                
+                post_data = {
+                    "title": title,
+                    "content": content,
+                    "tags": json.dumps(tags),
+                    "timestamp": ts
+                }
+                
+                # Add file data if present
+                if file_obj and file_obj.filename:
+                    post_data["filename"] = file_obj.filename
+                    post_data["mimeType"] = file_obj.mimetype
+                    post_data["file"] = encoded
+                
+                print(f"Sending to Google: {post_data.keys()}")  # Debug log
+                
+                # Send to Google Apps Script
+                response = requests.post(GOOGLE_WEBAPP_URL, data=post_data)
+                
+                print(f"Google response: {response.text}")  # Debug log
+                
                 result = response.json()
                 if result.get("status") == "success":
                     file_url = result.get("url")
