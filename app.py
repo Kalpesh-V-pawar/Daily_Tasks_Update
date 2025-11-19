@@ -1012,11 +1012,11 @@ Notes_page = """
     <div class="fields">
       <input id="noteTitle" class="title" placeholder="Title (optional)" />
       <input id="noteTags" class="tags-input" placeholder="tags comma-separated" />
-      <div class="filebox" style="margin-top:12px">
-         <label>Attachment:</label>
-         <input id="noteFile" type="file" />
-      </div>
-
+    </div>
+    
+    <div style="margin-top:12px">
+      <label class="muted">Attachment:</label>
+      <input id="noteFile" type="file" style="margin-left:8px;color:var(--muted)" />
     </div>
 
     <div id="rte" class="rte" contenteditable="true" placeholder="Start writing..."></div>
@@ -1065,6 +1065,7 @@ Notes_page = """
     noteTitle.value = '';
     noteTags.value = '';
     rte.innerHTML = '';
+    document.getElementById('noteFile').value = '';
     editor.classList.add('open');
     setTimeout(()=> rte.focus(), 220);
   });
@@ -1116,22 +1117,20 @@ Notes_page = """
       div.className = 'card';
       div.style.animation = 'slideDown .28s ease';
       div.innerHTML = `
-          <div class="title">${escapeHtml(n.title || '')}</div>
-          <div class="time">${n.timestamp}</div>
-          <div class="content">${n.content || ''}</div>
-        
-          ${n.attachment ? `<div><a href="${n.attachment}" target="_blank">📎 Attachment</a></div>` : ''}
-        
-          <div class="tags">
-            ${(n.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
-          </div>
-        
-          <div class="card-actions" style="margin-top:10px">
-            <button class="btn btn-edit" onclick='openEdit("${n.id}")'>Edit</button>
-            <button class="btn btn-delete" onclick='deleteNote("${n.id}")'>Delete</button>
-       </div>
-     
-
+        <div class="title">${escapeHtml(n.title || 'Untitled')}</div>
+        <div class="time">${n.timestamp}</div>
+        <div class="content">${n.content || ''}</div>
+      
+        ${n.attachment ? `<div style="margin-top:8px"><a href="${n.attachment}" target="_blank" style="color:var(--accent);text-decoration:none">📎 Attachment</a></div>` : ''}
+      
+        <div class="tags">
+          ${(n.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+        </div>
+      
+        <div class="card-actions" style="margin-top:10px">
+          <button class="btn btn-edit" onclick='openEdit("${n.id}")'>Edit</button>
+          <button class="btn btn-delete" onclick='deleteNote("${n.id}")'>Delete</button>
+        </div>
       `;
       notesGrid.appendChild(div);
     });
