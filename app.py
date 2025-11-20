@@ -10,6 +10,8 @@ from flask import session
 from bson.objectid import ObjectId
 import base64
 import json  # Add this line
+from flask import redirect, url_for
+
 
 
 
@@ -284,7 +286,7 @@ def save_login():
 @app.route("/LOGIN_page")
 def LOGIN_page_route():
     if not session.get('logged_in') :
-      return redirect (url_for(login))
+      return redirect (url_for("login"))
     return render_template_string(LOGIN_page)
 
 LOGIN_page = """
