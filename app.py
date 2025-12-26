@@ -1215,7 +1215,8 @@ Notes_page = """
         }
       };
     
-      xhr.onload = async () => {
+    xhr.onload = async () => {
+      if (xhr.status === 200) {
         bar.style.width = "100%";
         status.textContent = "✅ Upload complete";
     
@@ -1226,7 +1227,16 @@ Notes_page = """
         }, 700);
     
         await fetchNotes();
-      };
+      } else if (xhr.status === 401) {
+        status.textContent = "⚠ Session expired";
+        bar.style.background = "#ff4b5c";
+        setTimeout(() => location.href = "/", 1000);
+      } else {
+        status.textContent = "❌ Upload failed";
+        bar.style.background = "#ff4b5c";
+      }
+    };
+
     
       xhr.onerror = () => {
         status.textContent = "❌ Upload failed";
@@ -1409,58 +1419,56 @@ def add_note():
     try:
         india = pytz.timezone("Asia/Kolkata")
         ts = datetime.now(india).strftime("%Y-%m-%d %H:%M")
-        
-        # Read fields
+
         title = request.form.get("title", "")
         content = request.form.get("content", "")
         tags = json.loads(request.form.get("tags", "[]"))
-        
+
         file_url = None
-        
-        # Check if file exists and has content
-        if "file" in request.files:
-            file = request.files["file"]
-            if file and file.filename:
-                encoded = base64.b64encode(file.read()).decode("utf-8")
-                # Prepare data to send
-                file_obj = None
-                if "file" in request.files:
-                    file_obj = request.files["file"]
-                
-                post_data = {
-                    "title": title,
-                    "content": content,
-                    "tags": json.dumps(tags),
-                    "timestamp": ts
-                }
-                
-                # Add file data if present
-                if file_obj and file_obj.filename:
-                    post_data["filename"] = file_obj.filename
-                    post_data["mimeType"] = file_obj.mimetype
-                    post_data["file"] = encoded
-                
-                print(f"Sending to Google: {post_data.keys()}")  # Debug log
-                
-                # Send to Google Apps Script
-                response = requests.post(GOOGLE_WEBAPP_URL, data=post_data)
-                
-                print(f"Google response: {response.text}")  # Debug log
-                
-                result = response.json()
-                if result.get("status") == "success":
-                    file_url = result.get("url")
-        
+        encoded = None
+        filename = None
+        mimetype = None
+
+        file = request.files.get("file")
+        if file and file.filename:
+            raw_bytes = file.read()               # READ ONCE
+            encoded = base64.b64encode(raw_bytes).decode("utf-8")
+            filename = file.filename
+            mimetype = file.mimetype
+
+        # 🚀 FAST RESPONSE FIRST
         notes_collection.insert_one({
             "title": title,
             "content": content,
             "tags": tags,
             "timestamp": ts,
-            "attachment": file_url
+            "attachment": None
         })
-        
+
+        # 🐢 SLOW GOOGLE UPLOAD AFTER
+        if encoded:
+            post_data = {
+                "title": title,
+                "content": content,
+                "tags": json.dumps(tags),
+                "timestamp": ts,
+                "filename": filename,
+                "mimeType": mimetype,
+                "file": encoded
+            }
+
+            response = requests.post(GOOGLE_WEBAPP_URL, data=post_data, timeout=20)
+            result = response.json()
+
+            if result.get("status") == "success":
+                file_url = result.get("url")
+                notes_collection.update_one(
+                    {"title": title, "timestamp": ts},
+                    {"$set": {"attachment": file_url}}
+                )
+
         return jsonify({"status": "success"})
-    
+
     except Exception as e:
         print(f"ERROR in add_note: {str(e)}")
         import traceback
