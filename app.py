@@ -879,394 +879,178 @@ Notes_page = """
 <html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Notes — Dark iOS Style</title>
-  <style>
-    :root{
-      --bg:#0b0b0d;
-      --card:#0f1113;
-      --muted:#9aa0a6;
-      --accent:#ffd94d; /* warm gold highlight */
-      --glass: rgba(255,255,255,0.03);
-      --soft: rgba(255,255,255,0.02);
-      --radius: 14px;
-      --shadow: 0 6px 18px rgba(0,0,0,0.6);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Notes</title>
 
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,#070708, #0c0c0e);color:#fff;}
-    .app {max-width:940px;margin:28px auto;padding:18px;}
-    header {display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    h1{font-size:20px;margin:0;color:#fff}
-    .sub {color:var(--muted);font-size:13px}
-
-    /* Search / controls */
-    .controls {display:flex;gap:12px;align-items:center}
-    .search {
-      display:flex;align-items:center;background:var(--glass);padding:10px 12px;border-radius:12px;backdrop-filter: blur(6px);
-      box-shadow: var(--shadow); border:1px solid rgba(255,255,255,0.02);
-    }
-    .search input{background:transparent;border:0;outline:none;color:#fff;width:220px}
-
-    .filters {display:flex;gap:8px;align-items:center}
-    .select, .input {background:var(--soft);padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);color:#fff}
-    .select select, .input input{background:transparent;border:0;color:#fff;outline:none}
-
-    /* notes grid */
-    .grid {display:grid;grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap:14px;margin-top:16px}
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:12px;padding:14px;box-shadow: var(--shadow);border:1px solid rgba(255,255,255,0.03);
-      transform-origin: top center;overflow:hidden;
-    }
-    .title {font-weight:600;color: #fff;font-size:16px;margin-bottom:6px}
-    .time {font-size:12px;color:var(--muted);margin-bottom:8px}
-    .content {color:#e6e6e6;font-size:14px;margin-bottom:10px;max-height:140px;overflow:auto}
-    .tags {display:flex;gap:6px;flex-wrap:wrap}
-    .tag {font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted)}
-
-    .card-actions{display:flex;gap:8px;justify-content:flex-end}
-    .btn {border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:600}
-    .btn-edit{background:#2baf7a;color:#fff}
-    .btn-delete{background:#ff4b5c;color:#fff}
-
-    /* floating + */
-    .fab {
-      position:fixed;right:24px;bottom:28px;width:62px;height:62px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#ffd94d,#ffb700);
-      color:#111;font-size:32px;box-shadow: 0 10px 30px rgba(0,0,0,0.6);cursor:pointer;border:4px solid rgba(255,255,255,0.06);
-    }
-
-    /* editor modal (slide-down) */
-    .editor {
-      position:fixed;left:50%;transform:translateX(-50%) translateY(-120%);top:8%;width:92%;max-width:820px;background:var(--card);border-radius:16px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,0.7);
-      transition: transform 300ms cubic-bezier(.2,.9,.2,1), opacity 220ms;opacity:0;z-index:999;
-      border:1px solid rgba(255,255,255,0.03);
-    }
-    .editor.open { transform:translateX(-50%) translateY(0); opacity:1;}
-
-    .editor .toolbar {display:flex;gap:8px;align-items:center;margin-bottom:8px}
-    .toolbar button{background:transparent;border:0;color:var(--muted);padding:8px;border-radius:8px;cursor:pointer}
-    .toolbar button.active{color:var(--accent);background:rgba(255,217,77,0.06)}
-
-    .editor .fields{display:flex;gap:12px}
-    .editor input.title{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#fff}
-    .editor .tags-input{width:220px;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#fff}
-
-    .editor .rte {
-      margin-top:10px;border-radius:12px;padding:12px;min-height:120px;background:linear-gradient(180deg,#0b0b0d,#101215); color:#fff;outline:none;border:1px solid rgba(255,255,255,0.02)
-    }
-
-    .editor .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-    .editor .save{background:var(--accent);padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
-
-    /* small helpers */
-    .muted{color:var(--muted);font-size:13px}
-    @media (max-width:480px){
-      .search input{width:120px}
-      .editor{top:6%}
-    }
-  </style>
+<style>
+:root{
+  --bg:#0b0b0d;
+  --card:#0f1113;
+  --muted:#9aa0a6;
+  --accent:#ffd94d;
+  --radius:14px;
+}
+html,body{
+  margin:0;height:100%;
+  background:linear-gradient(180deg,#070708,#0c0c0e);
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+}
+.app{max-width:900px;margin:20px auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.card{background:#111;padding:14px;border-radius:12px}
+.title{font-weight:600}
+.muted{color:var(--muted);font-size:12px}
+.fab{
+  position:fixed;right:24px;bottom:24px;width:60px;height:60px;
+  background:linear-gradient(180deg,#ffd94d,#ffb700);
+  color:#000;font-size:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+.editor{
+  position:fixed;top:6%;left:50%;transform:translateX(-50%) translateY(-120%);
+  width:92%;max-width:820px;background:#0f1113;border-radius:16px;
+  padding:14px;transition:.3s;opacity:0;z-index:999;
+}
+.editor.open{transform:translateX(-50%) translateY(0);opacity:1}
+.rte{min-height:120px;background:#0b0b0d;padding:12px;border-radius:12px}
+input,button{background:#111;color:#fff;border-radius:10px;border:0;padding:8px}
+.save{background:var(--accent);color:#000;font-weight:700}
+</style>
 </head>
+
 <body>
-  <div class="app">
-    <header>
-      <div>
-        <h1>Notes</h1>
-        <div class="sub muted">iOS Dark • Your private notes</div>
-      </div>
 
-      <div class="controls">
-        <div class="search">
-          🔍 &nbsp;<input id="searchInput" placeholder="Search notes, tags..." />
-        </div>
+<div class="app">
+  <h2>Notes</h2>
+  <div id="notesGrid" class="grid"></div>
+</div>
 
-        <div class="select">
-          <select id="tagFilter">
-            <option value="">All tags</option>
-          </select>
-        </div>
+<div class="fab" id="openEditor">+</div>
 
-        <div class="input">
-          <input id="dateFilter" type="date" />
-        </div>
-      </div>
-    </header>
+<div class="editor" id="editor">
+  <input id="noteTitle" placeholder="Title" style="width:100%;margin-bottom:8px">
+  <input id="noteTags" placeholder="tags,comma,separated" style="width:100%;margin-bottom:8px">
+  <input id="noteFile" type="file" style="margin-bottom:8px">
+  <div id="rte" class="rte" contenteditable="true"></div>
 
-    <main>
-      <div id="notesGrid" class="grid"></div>
-    </main>
+  <div class="muted" id="uploadStatus" style="display:none;margin-top:8px"></div>
+  <div id="uploadBarWrap" style="display:none;height:6px;background:#222;border-radius:6px">
+    <div id="uploadBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd94d,#ffb700)"></div>
   </div>
 
-  <!-- floating add -->
-  <div class="fab" id="openEditor">+</div>
-
-  <!-- Editor modal -->
-  <div class="editor" id="editor">
-    <div class="toolbar">
-      <button id="boldBtn"><b>B</b></button>
-      <button id="italicBtn"><i>I</i></button>
-      <button id="underlineBtn"><u>U</u></button>
-      <button id="bulletBtn">• List</button>
-      <button id="linkBtn">🔗</button>
-      <div class="muted" style="margin-left:8px">Formatting</div>
-    </div>
-
-    <div class="fields">
-      <input id="noteTitle" class="title" placeholder="Title (optional)" />
-      <input id="noteTags" class="tags-input" placeholder="tags comma-separated" />
-    </div>
-    
-    <div style="margin-top:12px">
-      <label class="muted">Attachment:</label>
-      <input id="noteFile" type="file" style="margin-left:8px;color:var(--muted)" />
-    </div>
-
-    <div id="rte" class="rte" contenteditable="true" placeholder="Start writing..."></div>
-
-    <div class="footer">
-      <div class="muted" id="charCount">0 chars</div>
-      <div>
-        <button class="save" id="saveNoteBtn">Save</button>
-        <button class="btn" id="closeEditor" style="margin-left:8px;background:transparent;color:var(--muted)">Cancel</button>
-        
-      </div>        
-        <div id="uploadStatus" class="muted" style="display:none;margin-bottom:6px">
-          Uploading…
-        </div>
-        
-        <div id="uploadBarWrap" style="display:none;height:6px;border-radius:6px;background:#222;overflow:hidden">
-          <div id="uploadBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd94d,#ffb700)"></div>
-        </div>
-
-    </div>
+  <div style="margin-top:10px;text-align:right">
+    <button class="save" id="saveNoteBtn">Save</button>
+    <button id="closeEditor">Cancel</button>
   </div>
+</div>
 
 <script>
-  // state
-  let NOTES = [];     // fetched notes
-  let editingId = null;
+let NOTES = [];
+let editingId = null;
 
-  // elements
-  const editor = document.getElementById('editor');
-  const openEditorBtn = document.getElementById('openEditor');
-  const closeEditorBtn = document.getElementById('closeEditor');
-  const saveNoteBtn = document.getElementById('saveNoteBtn');
-  const notesGrid = document.getElementById('notesGrid');
-  const searchInput = document.getElementById('searchInput');
-  const tagFilter = document.getElementById('tagFilter');
-  const dateFilter = document.getElementById('dateFilter');
-  const noteTitle = document.getElementById('noteTitle');
-  const noteTags = document.getElementById('noteTags');
-  const rte = document.getElementById('rte');
-  const charCount = document.getElementById('charCount');
+const editor = document.getElementById("editor");
+const openEditorBtn = document.getElementById("openEditor");
+const closeEditorBtn = document.getElementById("closeEditor");
+const saveNoteBtn = document.getElementById("saveNoteBtn");
+const notesGrid = document.getElementById("notesGrid");
 
-  // toolbar
-  document.getElementById('boldBtn').addEventListener('click', ()=> document.execCommand('bold'));
-  document.getElementById('italicBtn').addEventListener('click', ()=> document.execCommand('italic'));
-  document.getElementById('underlineBtn').addEventListener('click', ()=> document.execCommand('underline'));
-  document.getElementById('bulletBtn').addEventListener('click', ()=> document.execCommand('insertUnorderedList'));
-  document.getElementById('linkBtn').addEventListener('click', ()=>{
-    const url = prompt("Enter URL (include https://)");
-    if (url) document.execCommand('createLink', false, url);
+const noteTitle = document.getElementById("noteTitle");
+const noteTags = document.getElementById("noteTags");
+const rte = document.getElementById("rte");
+
+openEditorBtn.onclick = () => {
+  editingId = null;
+  noteTitle.value = "";
+  noteTags.value = "";
+  rte.innerHTML = "";
+  editor.classList.add("open");
+};
+
+closeEditorBtn.onclick = () => editor.classList.remove("open");
+
+async function fetchNotes(){
+  const r = await fetch("/get_notes",{credentials:"include"});
+  NOTES = await r.json();
+  renderNotes();
+}
+
+function renderNotes(){
+  notesGrid.innerHTML="";
+  NOTES.forEach(n=>{
+    const d=document.createElement("div");
+    d.className="card";
+    d.innerHTML=`
+      <div class="title">${n.title||"Untitled"}</div>
+      <div class="muted">${n.timestamp}</div>
+      <div>${n.content||""}</div>
+      ${n.attachment?`<a href="${n.attachment}" target="_blank">📎 File</a>`:""}
+    `;
+    notesGrid.appendChild(d);
   });
+}
 
-  // editor open/close
-  openEditorBtn.addEventListener('click', ()=>{
-    editingId = null;
-    noteTitle.value = '';
-    noteTags.value = '';
-    rte.innerHTML = '';
-    document.getElementById('noteFile').value = '';
-    editor.classList.add('open');
-    setTimeout(()=> rte.focus(), 220);
-  });
-  closeEditorBtn.addEventListener('click', ()=> editor.classList.remove('open'));
+saveNoteBtn.addEventListener("click",(e)=>{
+  e.preventDefault();
 
-  // char count
-  rte.addEventListener('input', ()=> charCount.textContent = rte.innerText.length + " chars");
+  const formData=new FormData();
+  formData.append("title",noteTitle.value);
+  formData.append("content",rte.innerHTML);
+  formData.append("tags",JSON.stringify(noteTags.value.split(",").map(t=>t.trim()).filter(Boolean)));
 
-  // load notes from server
-  async function fetchNotes(){
-    const res = await fetch('/get_notes');
-    NOTES = await res.json();
-    populateTagFilter();
-    renderNotes();
-  }
+  const file=document.getElementById("noteFile");
+  if(file.files[0]) formData.append("file",file.files[0]);
 
-  // populate tag filter options
-  function populateTagFilter(){
-    const allTags = new Set();
-    NOTES.forEach(n => (n.tags||[]).forEach(t => allTags.add(t)));
-    tagFilter.innerHTML = '<option value="">All tags</option>';
-    Array.from(allTags).sort().forEach(t => {
-      const opt = document.createElement('option'); opt.value = t; opt.textContent = t; tagFilter.appendChild(opt);
-    });
-  }
+  const status=document.getElementById("uploadStatus");
+  const barWrap=document.getElementById("uploadBarWrap");
+  const bar=document.getElementById("uploadBar");
 
-  // render notes with search & filters (animated)
-  function renderNotes(){
-    const q = (searchInput.value||'').toLowerCase();
-    const selectedTag = tagFilter.value;
-    const dateVal = dateFilter.value; // YYYY-MM-DD
+  status.style.display="block";
+  barWrap.style.display="block";
+  bar.style.width="0%";
+  status.textContent="Uploading…";
 
-    notesGrid.innerHTML = '';
-
-    const filtered = NOTES.filter(n => {
-      if (selectedTag && !(n.tags||[]).includes(selectedTag)) return false;
-      if (dateVal && !n.timestamp.startsWith(dateVal)) {
-         // timestamp format 'YYYY-MM-DD HH:MM:SS' so startsWith works
-         return false;
-      }
-      if (!q) return true;
-      // search title, content (strip html), tags
-      const text = (n.title + ' ' + (n.content.replace(/<[^>]*>?/gm, '') || '') + ' ' + (n.tags||[]).join(' ')).toLowerCase();
-      return text.includes(q);
-    });
-
-    filtered.forEach(n => {
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.style.animation = 'slideDown .28s ease';
-      div.innerHTML = `
-        <div class="title">${escapeHtml(n.title || 'Untitled')}</div>
-        <div class="time">${n.timestamp}</div>
-        <div class="content">${n.content || ''}</div>
-      
-        ${n.attachment ? `<div style="margin-top:8px"><a href="${n.attachment}" target="_blank" style="color:var(--accent);text-decoration:none">📎 Attachment</a></div>` : ''}
-      
-        <div class="tags">
-          ${(n.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
-        </div>
-      
-        <div class="card-actions" style="margin-top:10px">
-          <button class="btn btn-edit" onclick='openEdit("${n.id}")'>Edit</button>
-          <button class="btn btn-delete" onclick='deleteNote("${n.id}")'>Delete</button>
-        </div>
-      `;
-      notesGrid.appendChild(div);
-    });
-
-    // tiny animation keyframes inserted once:
-    if (!document.getElementById('notes-anim')) {
-      const s = document.createElement('style'); s.id='notes-anim';
-      s.innerHTML = '@keyframes slideDown{from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:translateY(0)}}';
-      document.head.appendChild(s);
+  let fake=0;
+  const fakeTimer=setInterval(()=>{
+    if(fake<90){
+      fake+=3;
+      bar.style.width=fake+"%";
+      status.textContent=`Uploading… ${fake}%`;
     }
-  }
+  },120);
 
-  // helpers
-  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+  const xhr=new XMLHttpRequest();
+  xhr.open("POST","/add_note",true);
+  xhr.withCredentials=true;
 
-  // open edit modal prefilled
-  function openEdit(id){
-    const n = NOTES.find(x=>x.id===id);
-    if(!n) return;
-    editingId = id;
-    noteTitle.value = n.title || '';
-    noteTags.value = (n.tags||[]).join(', ');
-    rte.innerHTML = n.content || '';
-    editor.classList.add('open');
-    setTimeout(()=> rte.focus(), 220);
-  }
+  xhr.upload.onprogress=(e)=>{
+    if(e.lengthComputable){
+      clearInterval(fakeTimer);
+      const p=Math.round((e.loaded/e.total)*100);
+      bar.style.width=p+"%";
+      status.textContent=`Uploading… ${p}%`;
+    }
+  };
 
-  // add / save note
-    saveNoteBtn.addEventListener("click", () => {
-      const title = noteTitle.value.trim();
-      const content = rte.innerHTML.trim();
-      const rawTags = noteTags.value.split(",").map(t => t.trim()).filter(Boolean);
-      const fileInput = document.getElementById("noteFile");
-    
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("content", content);
-      formData.append("tags", JSON.stringify(rawTags));
-    
-      if (fileInput && fileInput.files[0]) {
-        formData.append("file", fileInput.files[0]);
-      }
-    
-      if (editingId) {
-        formData.append("id", editingId);
-      }
-    
-      /* ---- UI ELEMENTS ---- */
-      const status = document.getElementById("uploadStatus");
-      const barWrap = document.getElementById("uploadBarWrap");
-      const bar = document.getElementById("uploadBar");
-    
-      status.style.display = "block";
-      status.textContent = "Uploading…";
-      barWrap.style.display = "block";
-      bar.style.width = "0%";
-      bar.style.background = "linear-gradient(90deg,#ffd94d,#ffb700)";
-    
-      /* ---- XHR FOR PROGRESS ---- */
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", editingId ? "/edit_note" : "/add_note", true);
-      xhr.withCredentials = true;
-    
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          const percent = Math.round((e.loaded / e.total) * 100);
-          bar.style.width = percent + "%";
-          status.textContent = `Uploading… ${percent}%`;
-        }
-      };
-    
-    xhr.onload = async () => {
-      if (xhr.status === 200) {
-        bar.style.width = "100%";
-        status.textContent = "✅ Upload complete";
-    
-        setTimeout(() => {
-          status.style.display = "none";
-          barWrap.style.display = "none";
-          editor.classList.remove("open");
-        }, 700);
-    
-        await fetchNotes();
-      } else if (xhr.status === 401) {
-        status.textContent = "⚠ Session expired";
-        bar.style.background = "#ff4b5c";
-        setTimeout(() => location.href = "/", 1000);
-      } else {
-        status.textContent = "❌ Upload failed";
-        bar.style.background = "#ff4b5c";
-      }
-    };
-
-    
-      xhr.onerror = () => {
-        status.textContent = "❌ Upload failed";
-        bar.style.background = "#ff4b5c";
-      };
-    
-      xhr.send(formData);
-    });
-
-
-  // delete
-  async function deleteNote(id){
-    if(!confirm('Delete this note?')) return;
-    await fetch('/delete_note', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      credentials: "include",
-      body: JSON.stringify({ id })
-    });
+  xhr.onload=async()=>{
+    clearInterval(fakeTimer);
+    bar.style.width="100%";
+    status.textContent="✅ Saved";
     await fetchNotes();
-  }
+  };
 
-  // search & filters events
-  searchInput.addEventListener('input', ()=> renderNotes());
-  tagFilter.addEventListener('change', ()=> renderNotes());
-  dateFilter.addEventListener('change', ()=> renderNotes());
+  xhr.onerror=()=>{
+    clearInterval(fakeTimer);
+    status.textContent="❌ Upload failed";
+  };
 
-  // init
-  fetchNotes();
+  xhr.send(formData);
+});
+
+fetchNotes();
 </script>
+
 </body>
 </html>
 """
