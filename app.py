@@ -1033,12 +1033,25 @@ saveNoteBtn.addEventListener("click",(e)=>{
     }
   };
 
-  xhr.onload=async()=>{
-    clearInterval(fakeTimer);
-    bar.style.width="100%";
-    status.textContent="✅ Saved";
-    await fetchNotes();
-  };
+    xhr.onload = async () => {
+      try {
+        const res = JSON.parse(xhr.responseText);
+    
+        if (res.status === "success") {
+          bar.style.width = "100%";
+          status.textContent = "✅ Saved";
+          await fetchNotes();
+          setTimeout(() => editor.classList.remove("open"), 600);
+        } else {
+          status.textContent = "❌ Save failed";
+          bar.style.background = "#ff4b5c";
+        }
+      } catch (e) {
+        status.textContent = "❌ Server error";
+        bar.style.background = "#ff4b5c";
+      }
+    };
+
 
   xhr.onerror=()=>{
     clearInterval(fakeTimer);
@@ -1209,55 +1222,48 @@ def add_note():
         tags = json.loads(request.form.get("tags", "[]"))
 
         file_url = None
-        encoded = None
-        filename = None
-        mimetype = None
 
+        # ---- FILE HANDLING ----
         file = request.files.get("file")
         if file and file.filename:
-            raw_bytes = file.read()               # READ ONCE
-            encoded = base64.b64encode(raw_bytes).decode("utf-8")
-            filename = file.filename
-            mimetype = file.mimetype
+            file_bytes = file.read()  # READ ONCE
+            encoded = base64.b64encode(file_bytes).decode("utf-8")
 
-        # 🚀 FAST RESPONSE FIRST
-        notes_collection.insert_one({
-            "title": title,
-            "content": content,
-            "tags": tags,
-            "timestamp": ts,
-            "attachment": None
-        })
-
-        # 🐢 SLOW GOOGLE UPLOAD AFTER
-        if encoded:
             post_data = {
                 "title": title,
                 "content": content,
                 "tags": json.dumps(tags),
                 "timestamp": ts,
-                "filename": filename,
-                "mimeType": mimetype,
+                "filename": file.filename,
+                "mimeType": file.mimetype,
                 "file": encoded
             }
 
-            response = requests.post(GOOGLE_WEBAPP_URL, data=post_data, timeout=20)
-            result = response.json()
+            r = requests.post(GOOGLE_WEBAPP_URL, data=post_data, timeout=60)
 
-            if result.get("status") == "success":
-                file_url = result.get("url")
-                notes_collection.update_one(
-                    {"title": title, "timestamp": ts},
-                    {"$set": {"attachment": file_url}}
-                )
+            if r.status_code != 200:
+                return jsonify({"status": "error", "msg": "Google upload failed"}), 500
+
+            result = r.json()
+            if result.get("status") != "success":
+                return jsonify({"status": "error", "msg": "Drive error"}), 500
+
+            file_url = result.get("url")
+
+        # ---- SAVE NOTE ----
+        notes_collection.insert_one({
+            "title": title,
+            "content": content,
+            "tags": tags,
+            "timestamp": ts,
+            "attachment": file_url
+        })
 
         return jsonify({"status": "success"})
 
     except Exception as e:
-        print(f"ERROR in add_note: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print("ADD_NOTE ERROR:", e)
+        return jsonify({"status": "error", "msg": str(e)}), 500
 
 
 @app.route("/edit_note", methods=["POST"])
