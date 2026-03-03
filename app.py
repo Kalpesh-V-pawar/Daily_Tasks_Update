@@ -1069,9 +1069,12 @@ fetchNotes();
 """
 
 def login_required(func):
+    True
     def wrapper(*args, **kwargs):
-        if "username" not in session:
-            return redirect(url_for("Login_page"))
+        bypass_login = True  # Set this to False when you want security back
+        if bypass_login or "username" in session:
+        # if "username" not in session:
+        #    return redirect(url_for("Login_page"))
         return func(*args, **kwargs)
     wrapper.__name__ = func.__name__
     return wrapper
