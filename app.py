@@ -1068,7 +1068,8 @@ fetchNotes();
 </html>
 """
 
-def login_required(func):
+def login_required1(func):
+    # not using
     @wraps(func) # Best practice to preserve function metadata
     def wrapper(*args, **kwargs):
         bypass_login = True  # Set this to False when you want security back
@@ -1078,6 +1079,22 @@ def login_required(func):
             return func(*args, **kwargs)
          return redirect(url_for("Login_page"))    
     #wrapper.__name__ = func.__name__
+    return wrapper
+
+from functools import wraps
+from flask import session, redirect, url_for
+
+def login_required(func):
+    @wraps(func) 
+    def wrapper(*args, **kwargs):
+        bypass_login = True  # Toggle to False when you're ready for security
+        
+        if bypass_login or "username" in session:
+            return func(*args, **kwargs)
+            
+        # This will only execute if bypass_login is False AND session is empty
+        return redirect(url_for("Login_page"))  
+
     return wrapper
 
 
