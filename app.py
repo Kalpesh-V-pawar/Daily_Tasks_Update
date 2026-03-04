@@ -1081,8 +1081,6 @@ def login_required1(func):
     #wrapper.__name__ = func.__name__
     return wrapper
 
-from functools import wraps
-from flask import session, redirect, url_for
 
 def login_required(func):
     @wraps(func) 
@@ -1100,7 +1098,8 @@ def login_required(func):
 
 @app.route("/")
 def login():
-    return render_template_string(Maine_page)
+    #return render_template_string(Maine_page)
+    return render_template_string(Login_page)
 
 @app.route("/dailytasks")
 def dailytasks():
