@@ -1250,7 +1250,7 @@ def notes():
     return Notes_page
 
 @app.route("/booke")
-def paisa():
+def booke():
     return render_template_string(Books_page)
 
 # API to Save Task
