@@ -451,7 +451,7 @@ LOGIN_page = """
     <body>
 <div class="container">    
  <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">    
-        <h1>Enter your details</h1><br><br>
+        <h1>Enter your details</h1><br>
  <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">
     <form action="{{ url_for('dailytasks') }}" method="get">
         <button type="submit">Go to Second Page</button>
@@ -467,8 +467,7 @@ LOGIN_page = """
 
     <form action="{{ url_for('notes') }}" method="get">
         <button type="submit">Go to Books Page</button>
-    </form>      
- <div class="container">  
+    </form><br>      
     <script type='text/javascript' src='//pl26677118.profitableratecpm.com/a7/0f/34/a70f3406ef58579888372fbebaa0bcd4.js'></script>
    </body>     
 </html>
