@@ -465,7 +465,7 @@ LOGIN_page = """
         <button type="submit">Go to notee Page</button>
     </form>  
 
-    <form action="{{ url_for('notes') }}" method="get">
+    <form action="{{ url_for('booke') }}" method="get">
         <button type="submit">Go to Books Page</button>
     </form>    
     <script type='text/javascript' src='//pl26677118.profitableratecpm.com/a7/0f/34/a70f3406ef58579888372fbebaa0bcd4.js'></script>
