@@ -1068,21 +1068,16 @@ fetchNotes();
 </html>
 """
 
-def login_required1(func):
-    # not using
+def login_required(func):
     @wraps(func) # Best practice to preserve function metadata
     def wrapper(*args, **kwargs):
-        bypass_login = True  # Set this to False when you want security back
-        if bypass_login or "username" in session:
-        # if "username" not in session:
-        #    return redirect(url_for("Login_page"))
-            return func(*args, **kwargs)
-         return redirect(url_for("Login_page"))    
-    #wrapper.__name__ = func.__name__
+        if "username" not in session:
+        return redirect(url_for("Login_page"))  
+    wrapper.__name__ = func.__name__
     return wrapper
 
 
-def login_required(func):
+def login_required1(func):
     @wraps(func) 
     def wrapper(*args, **kwargs):
         bypass_login = True  # Toggle to False when you're ready for security
