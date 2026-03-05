@@ -1071,7 +1071,7 @@ fetchNotes();
 def login_required(func):
     def wrapper(*args, **kwargs):
         if "username" not in session:
-        return redirect(url_for("Login_page"))  
+            return redirect(url_for("Login_page"))  
     wrapper.__name__ = func.__name__
     return wrapper
 
