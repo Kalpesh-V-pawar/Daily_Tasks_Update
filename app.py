@@ -1192,9 +1192,7 @@ Books_page = """
             }
         </style>    
     </head>
-    <body>
-<div class="container">    
- <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">    
+    <body>   
     <div class="pdf-container">
         <iframe 
             src="https://drive.google.com/file/d/1YGHu27B-S7jvdl_iuLj30LdhbmY1E19u/preview" 
@@ -1203,7 +1201,6 @@ Books_page = """
             allow="autoplay" 
             style="border: none;">
         </iframe>
-    </div>
     
    </body>     
 </html>
