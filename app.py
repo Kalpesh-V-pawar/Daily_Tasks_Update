@@ -1080,15 +1080,26 @@ Books_page = """
     <title>Login page</title>
     <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
         <style>
-            .pdf-container {
-                position: relative;
+            /* Remove margins and padding from the body to ensure true full screen */
+            body, html {
+                margin: 0;
+                padding: 0;
+                height: 100%;
                 width: 100%;
-                max-width: 900px; /* Limits the width on large monitors */
-                margin: 0 auto;   /* Centers the book */
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                overflow: hidden;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                overflow: hidden; /* Prevents double scrollbars */
+            }
+            
+            .pdf-container {
+                width: 100vw;   /* 100% of the browser width */
+                height: 100vh;  /* 100% of the browser height */
+                margin: 0;
+                padding: 0;
+            }
+            
+            .pdf-container iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
             }
         </style>    
     </head>
@@ -1096,8 +1107,6 @@ Books_page = """
     <div class="pdf-container">
         <iframe 
             src="https://drive.google.com/file/d/1YGHu27B-S7jvdl_iuLj30LdhbmY1E19u/preview" 
-            width="100%" 
-            height="600px" 
             allow="autoplay" 
             style="border: none;">
         </iframe>
