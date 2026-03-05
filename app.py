@@ -1091,8 +1091,8 @@ def login_required(func):
 
 @app.route("/")
 def login():
-    return render_template_string(Maine_page)
-    #return render_template_string(Login_page)
+    #return render_template_string(Maine_page)
+    return render_template_string(Login_page)
 
 @app.route("/dailytasks")
 def dailytasks():
