@@ -1068,13 +1068,25 @@ fetchNotes();
 </html>
 """
 
-def login_required(func):
+def login_required1(func):
     def wrapper(*args, **kwargs):
         if "username" not in session:
             return redirect(url_for("Login_page"))  
     wrapper.__name__ = func.__name__
     return wrapper
 
+def login_required(func):
+    @wraps(func) 
+    def wrapper(*args, **kwargs):
+        bypass_login = True  # Toggle to False when you're ready for security
+        
+        if bypass_login or "username" in session:
+            return func(*args, **kwargs)
+            
+        # This will only execute if bypass_login is False AND session is empty
+        return redirect(url_for("Login_page"))  
+
+    return wrapper
 
 @app.route("/")
 def login():
