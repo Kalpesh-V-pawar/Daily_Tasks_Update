@@ -1195,12 +1195,6 @@ Books_page = """
     <body>
 <div class="container">    
  <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">    
-        <h1>Enter your details</h1>
- <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; margin-top: 20px;">
-    <form action="{{ url_for('dailytasks') }}" method="get">
-        <button type="submit">Go to Second Page</button>
-    </form>
-
     <div class="pdf-container">
         <iframe 
             src="https://drive.google.com/file/d/1YGHu27B-S7jvdl_iuLj30LdhbmY1E19u/preview" 
