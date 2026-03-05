@@ -1069,7 +1069,6 @@ fetchNotes();
 """
 
 def login_required(func):
-    @wraps(func) # Best practice to preserve function metadata
     def wrapper(*args, **kwargs):
         if "username" not in session:
         return redirect(url_for("Login_page"))  
@@ -1093,8 +1092,8 @@ def login_required1(func):
 
 @app.route("/")
 def login():
-    #return render_template_string(Maine_page)
-    return render_template_string(Login_page)
+    return render_template_string(Maine_page)
+    #return render_template_string(Login_page)
 
 @app.route("/dailytasks")
 def dailytasks():
