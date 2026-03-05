@@ -1076,20 +1076,6 @@ def login_required(func):
     return wrapper
 
 
-def login_required1(func):
-    @wraps(func) 
-    def wrapper(*args, **kwargs):
-        bypass_login = True  # Toggle to False when you're ready for security
-        
-        if bypass_login or "username" in session:
-            return func(*args, **kwargs)
-            
-        # This will only execute if bypass_login is False AND session is empty
-        return redirect(url_for("Login_page"))  
-
-    return wrapper
-
-
 @app.route("/")
 def login():
     return render_template_string(Maine_page)
