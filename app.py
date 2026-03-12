@@ -1198,12 +1198,21 @@ Books_page = """
     </div>
     
     <div id="sidebar">
-        <h3 style="text-align: center;">Settings</h3>
-        <div class="sidebar-item" onclick="resetProgress()">🔄 Reset Book</div>
+        <h3 style="text-align: center; margin-bottom: 5px;">Settings</h3>
+        
+        <div id="page-counter" style="text-align: center; font-size: 18px; font-weight: bold; color: #007bff; margin-bottom: 20px;">
+            Page <span id="current-page">1</span> / <span id="total-pages">--</span>
+        </div>
+    
         <div class="sidebar-item" onclick="toggleNightMode()">🌙 Night Mode</div>
-        <div id="page-info" style="font-size: 14px; text-align: center; color: #aaa;"></div>
-    </div>    
-    <div id="viewer-container"></div>
+        <div class="sidebar-item" onclick="resetProgress()">🔄 Reset Book</div>
+    
+        <div style="margin-top: 20px; padding: 10px; text-align: center; border-top: 1px solid #444;">
+            <p style="font-size: 12px; color: #888; margin-bottom: 8px;">Jump to Page:</p>
+            <input type="number" id="jump-input" placeholder="No." style="width: 60px; padding: 5px; background: #333; color: white; border: 1px solid #007bff; border-radius: 4px; outline: none;">
+            <button onclick="jumpToPage()" style="padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Go</button>
+        </div>
+    </div>
 
     <script>
         const FILE_ID = "{{ file_id }}"; 
@@ -1247,6 +1256,27 @@ Books_page = """
             document.getElementById('sidebar').classList.toggle('open');
         }
         
+        // Function to update the number in the sidebar
+        function updatePageDisplay(pageNum) {
+            const el = document.getElementById('current-page');
+            if (el) el.innerText = pageNum;
+        }
+        
+        // Function to jump to a specific page
+        function jumpToPage() {
+            const input = document.getElementById('jump-input');
+            const pageNum = parseInt(input.value);
+            if (pageNum > 0 && pageNum <= pdfDoc.numPages) {
+                const target = document.querySelector(`canvas[data-page="${pageNum}"]`);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    toggleSidebar(); // Close sidebar after jumping
+                }
+            } else {
+                alert("Please enter a valid page number");
+            }
+        }
+        
         function resetProgress() {
             if(confirm("Start book from page 1?")) {
                 fetch('/save-progress', {
@@ -1283,12 +1313,14 @@ Books_page = """
             const { page: startPage } = await progressResp.json();
 
             pdfDoc = await pdfjsLib.getDocument(PROXY_URL).promise;
+            document.getElementById('total-pages').innerText = pdfDoc.numPages;
             
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const pageNum = parseInt(entry.target.getAttribute('data-page'));
                         renderPage(pageNum, entry.target);
+                        updatePageDisplay(pageNum);
                         
                         // Debounced Save
                         clearTimeout(saveTimeout);
