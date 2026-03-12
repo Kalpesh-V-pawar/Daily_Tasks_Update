@@ -1122,6 +1122,18 @@ Books_page = """
             canvas.style.background = "white"; // Switch from gray placeholder to white
         }
 
+        async function saveProgress(pageNum) {
+            clearTimeout(saveTimeout);
+            // Only save to MongoDB if the user stays on a page for 1 second
+            saveTimeout = setTimeout(() => {
+                fetch('/save-progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bookId: FILE_ID, page: pageNum })
+                });
+            }, 1000); 
+        }
+
         async function initReader() {
             const container = document.getElementById('viewer-container');
             const tip = document.getElementById('tip');
