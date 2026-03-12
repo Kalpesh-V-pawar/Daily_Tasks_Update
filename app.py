@@ -1300,11 +1300,6 @@ Books_page = """
             }
         }
         
-        // Close sidebar when clicking outside
-        document.getElementById('viewer-container').onclick = function() {
-            document.getElementById('sidebar').classList.remove('open');
-        };
-
         async function initReader() {
             const container = document.getElementById('viewer-container');
             const tip = document.getElementById('tip');
@@ -1313,7 +1308,10 @@ Books_page = """
             const { page: startPage } = await progressResp.json();
 
             pdfDoc = await pdfjsLib.getDocument(PROXY_URL).promise;
-            document.getElementById('total-pages').innerText = pdfDoc.numPages;
+            
+            // Set total pages in sidebar
+            const totalEl = document.getElementById('total-pages');
+            if (totalEl) totalEl.innerText = pdfDoc.numPages;
             
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -1322,7 +1320,6 @@ Books_page = """
                         renderPage(pageNum, entry.target);
                         updatePageDisplay(pageNum);
                         
-                        // Debounced Save
                         clearTimeout(saveTimeout);
                         saveTimeout = setTimeout(() => {
                             fetch('/save-progress', {
@@ -1333,14 +1330,13 @@ Books_page = """
                         }, 1500);
                     }
                 });
-            }, { threshold: 0.3 });
+            }, { threshold: 0.1 }); // Lowered threshold for better mobile detection
 
             for (let i = 1; i <= pdfDoc.numPages; i++) {
                 const page = await pdfDoc.getPage(i);
                 const unscaled = page.getViewport({ scale: 1.0 });
-                
-                // Calculate aspect ratio height to prevent "Page Jumping"
                 const ratio = unscaled.height / unscaled.width;
+                
                 const wrapper = document.createElement('div');
                 wrapper.className = 'page-wrapper';
                 wrapper.style.width = "100%";
@@ -1355,14 +1351,25 @@ Books_page = """
 
                 if (i === startPage) {
                     await renderPage(i, canvas);
-                    // Use behavior: 'auto' for precise jumping
                     wrapper.scrollIntoView({ behavior: 'auto', block: 'start' });
                 }
             }
-            setTimeout(() => tip.style.display = 'none', 2000);
+            if (tip) setTimeout(() => tip.style.display = 'none', 2000);
         }
 
-        initReader();
+        // --- FIXED WRAPPER ---
+        document.addEventListener('DOMContentLoaded', () => { 
+            initReader();
+
+            // Setup sidebar auto-close
+            const viewer = document.getElementById('viewer-container');
+            if (viewer) {
+                viewer.onclick = function() {
+                    const sidebar = document.getElementById('sidebar');
+                    if (sidebar) sidebar.classList.remove('open');
+                };
+            }
+        }); 
     </script>
 </body>
 </html>
