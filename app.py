@@ -1213,6 +1213,7 @@ Books_page = """
             <button onclick="jumpToPage()" style="padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Go</button>
         </div>
     </div>
+    <div id="viewer-container"></div>
 
     <script>
         const FILE_ID = "{{ file_id }}"; 
