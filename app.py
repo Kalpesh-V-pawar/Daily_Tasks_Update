@@ -1,7 +1,6 @@
 import sys
 import os
 import flask
-from flask import Flask, request, jsonify, render_template_string
 from pymongo import MongoClient
 from datetime import datetime
 import requests
@@ -12,6 +11,9 @@ import base64
 import json  # Add this line
 from flask import redirect, url_for
 from functools import wraps
+import os
+import requests
+from flask import Flask, request, jsonify, Response, stream_with_context, render_template_string
 
 
 
@@ -1072,48 +1074,116 @@ fetchNotes();
 </html>
 """
 
+
+# 1. MongoDB Setup
+MONGO_URI = os.environ.get("MONGO_URI")
+client = MongoClient(MONGO_URI)
+db = client.get_database("LibraryDB")
+progress_col = db.reading_progress
+
+# 2. The HTML/JS Logic
 Books_page = """
-<html>
-    <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">    
-    <title>Login page</title>
+    <title>My Library</title>
     <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
-        <style>
-            /* Remove margins and padding from the body to ensure true full screen */
-            body, html {
-                margin: 0;
-                padding: 0;
-                height: 100%;
-                width: 100%;
-                overflow: hidden; /* Prevents double scrollbars */
-            }
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #2c2c2c; overflow: hidden; }
+        #viewer-container { width: 100vw; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; }
+        canvas { margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 95%; background: white; }
+        #tip { position: fixed; top: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px 15px; border-radius: 20px; z-index: 100; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div id="tip">Loading...</div>
+    <div id="viewer-container"></div>
+
+    <script>
+        // Dynamically get the file ID from the Flask template context
+        const FILE_ID = "{{ file_id }}"; 
+        const PROXY_URL = `/proxy-pdf/${FILE_ID}`;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        async function initReader() {
+            const container = document.getElementById('viewer-container');
+            const tip = document.getElementById('tip');
+
+            const progressResp = await fetch(`/get-progress/${FILE_ID}`);
+            const progressData = await progressResp.json();
+            const startPage = progressData.page || 1;
+
+            const pdf = await pdfjsLib.getDocument(PROXY_URL).promise;
             
-            .pdf-container {
-                width: 100vw;   /* 100% of the browser width */
-                height: 100vh;  /* 100% of the browser height */
-                margin: 0;
-                padding: 0;
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const pageNum = parseInt(entry.target.getAttribute('data-page'));
+                        fetch('/save-progress', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ bookId: FILE_ID, page: pageNum })
+                        });
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 1.5 });
+                const canvas = document.createElement('canvas');
+                canvas.setAttribute('data-page', i);
+                canvas.id = `page-${i}`;
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                container.appendChild(canvas);
+                observer.observe(canvas);
+                await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+                if (i === startPage) canvas.scrollIntoView();
             }
-            
-            .pdf-container iframe {
-                width: 100%;
-                height: 100%;
-                border: none;
-            }
-        </style>    
-    </head>
-    <body>   
-    <div class="pdf-container">
-        <iframe 
-            src="https://drive.google.com/file/d/1YGHu27B-S7jvdl_iuLj30LdhbmY1E19u/preview" 
-            allow="autoplay" 
-            style="border: none;">
-        </iframe>
-    
-   </body>     
+            tip.style.display = 'none';
+        }
+        initReader();
+    </script>
+</body>
 </html>
 """
+
+# --- ROUTES ---
+
+
+@app.route("/booke")
+def booke():
+    # Example ID - You can change this or pass it as a query parameter
+    file_id = "1YGHu27B-S7jvdl_iuLj30LdhbmY1E19u"
+    return render_template_string(Books_page, file_id=file_id)
+
+@app.route('/proxy-pdf/<file_id>')
+def proxy_pdf(file_id):
+    google_url = f'https://drive.google.com/uc?id={file_id}&export=download'
+    req = requests.get(google_url, stream=True)
+    return Response(stream_with_context(req.iter_content(chunk_size=1024)),
+                    content_type='application/pdf')
+
+@app.route('/get-progress/<book_id>')
+def get_progress(book_id):
+    data = progress_col.find_one({"username": "default_reader", "bookId": book_id})
+    return jsonify({"page": data["page"]} if data else {"page": 1})
+
+@app.route('/save-progress', methods=['POST'])
+def save_progress():
+    data = request.json
+    progress_col.update_one(
+        {"username": "default_reader", "bookId": data['bookId']},
+        {"$set": {"page": data['page']}},
+        upsert=True
+    )
+    return jsonify({"status": "saved"})
+
 
 
 
@@ -1155,9 +1225,6 @@ def paisa():
 def notes():
     return Notes_page
 
-@app.route("/booke")
-def booke():
-    return render_template_string(Books_page)
 
 # API to Save Task
 @app.route('/save_task', methods=['POST'])
