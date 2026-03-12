@@ -1234,7 +1234,7 @@ Books_page = """
             
             // Match canvas drawing size to actual screen width for sharpness
             const containerWidth = window.innerWidth;
-            const unscaledViewport = page.getPage({ scale: 1.0 });
+            const unscaledViewport = page.getViewport({ scale: 1.0 });
             const scale = (containerWidth / unscaledViewport.width) * dpr * qualityMultiplier; 
             const viewport = page.getViewport({ scale: scale });
             const context = canvas.getContext('2d');
