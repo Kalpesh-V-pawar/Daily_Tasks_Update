@@ -1087,14 +1087,14 @@ Books_page = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"">    
     <title>My Library</title>
     <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #1a1a1a; overflow: hidden; }
         #viewer-container { width: 100vw; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
-        canvas { margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 100%; background: #333; height: auto !important; }
+        canvas { margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: block; }
         #tip { position: fixed; top: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px 15px; border-radius: 20px; z-index: 100; font-size: 13px; pointer-events: none; }
     </style>
 </head>
@@ -1115,23 +1115,33 @@ Books_page = """
             if (canvas.getAttribute('rendered') === 'true') return;
             const page = await pdfDoc.getPage(pageNum);
             
-            // --- AUTO-FIT LOGIC ---
-            // 1. Get the original width of the PDF page
+            // 1. Get the original scale based on screen width
             const unscaledViewport = page.getViewport({ scale: 1.0 });
+            const containerWidth = window.innerWidth * 0.98; 
+            const baseScale = containerWidth / unscaledViewport.width;
             
-            // 2. Calculate scale based on the user's screen width (with a tiny margin)
-            const containerWidth = window.innerWidth * 0.95; 
-            const dynamicScale = containerWidth / unscaledViewport.width;
-            
-            // 3. Apply that scale
-            const viewport = page.getViewport({ scale: dynamicScale });
-            // -----------------------
+            // 2. Adjust for Mobile High-Density (DPR)
+            const dpr = window.devicePixelRatio || 1;
+            const viewport = page.getViewport({ scale: baseScale * dpr });
         
-            const context = canvas.getContext('2d');
+            // 3. Set the CANVAS size (the actual pixels drawn)
             canvas.height = viewport.height;
             canvas.width = viewport.width;
+        
+            // 4. Set the DISPLAY size (how big it looks on screen)
+            canvas.style.width = `${containerWidth}px`;
+            canvas.style.height = "auto";
+        
+            const context = canvas.getContext('2d');
             
-            await page.render({ canvasContext: context, viewport: viewport }).promise;
+            // This tells the context to scale everything up by the DPR
+            context.setTransform(dpr, 0, 0, dpr, 0, 0);
+        
+            await page.render({ 
+                canvasContext: context, 
+                viewport: page.getViewport({ scale: baseScale }) 
+            }).promise;
+        
             canvas.setAttribute('rendered', 'true');
             canvas.style.background = "white";
         }
