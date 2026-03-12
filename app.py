@@ -1230,7 +1230,7 @@ Books_page = """
             const page = await pdfDoc.getPage(pageNum);
             const dpr = window.devicePixelRatio || 1;
             // INCREASE THIS: 2.0 is sharp, 3.0 is ultra-clear (but uses more memory)
-            const qualityMultiplier = 2.0;
+            const qualityMultiplier = 1.0;
             
             // Match canvas drawing size to actual screen width for sharpness
             const containerWidth = window.innerWidth;
