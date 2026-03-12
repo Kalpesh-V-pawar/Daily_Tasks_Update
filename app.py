@@ -1127,11 +1127,12 @@ Books_page = """
         /* The Hamburger Button */
         #menu-btn {
             position: fixed;
-            top: 15px;
-            right: 15px;
-            width: 45px;
-            height: 45px;
-            background: rgba(0, 123, 255, 0.2); /* Transparent Blue Box */
+            top: 20px;
+            left: 15px;
+            width: 30px;
+            height: 25px;
+            background: rgba(173, 216, 230, 0.2); /* Transparent Blue Box */
+            backdrop-filter: blur(5px);
             border: 2px solid #007bff;
             border-radius: 8px;
             display: flex;
@@ -1146,7 +1147,7 @@ Books_page = """
         
         #menu-btn .line {
             width: 100%;
-            height: 3px;
+            height: 2px;
             background-color: #007bff; /* Blue Lines */
             transition: 0.3s;
         }
@@ -1155,11 +1156,11 @@ Books_page = """
         #sidebar {
             position: fixed;
             top: 0;
-            right: -280px; /* Hidden by default */
+            left: -280px; /* Hidden by default */
             width: 250px;
             height: 100%;
             background: rgba(30, 30, 30, 0.95);
-            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
             transition: 0.4s;
             z-index: 999;
             padding: 80px 15px 20px;
@@ -1170,7 +1171,7 @@ Books_page = """
         }
         
         #sidebar.open {
-            right: 0;
+            left: 0;
         }
         
         .sidebar-item {
