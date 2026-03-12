@@ -1087,19 +1087,47 @@ Books_page = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"">    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    
     <title>My Library</title>
     <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #1a1a1a; overflow: hidden; }
-        #viewer-container { width: 100vw; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
-        canvas { margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: block; }
-        #tip { position: fixed; top: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px 15px; border-radius: 20px; z-index: 100; font-size: 13px; pointer-events: none; }
+        body, html { margin: 0; padding: 0; background: #1a1a1a; }
+        
+        /* The container must allow scrolling but not interfere with zoom */
+        #viewer-container { 
+            width: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            overflow-x: hidden;
+            overflow-anchor: none; /* Prevents scroll jumping */
+        }
+
+        /* Page wrapper preserves the exact height to prevent jumping */
+        .page-wrapper {
+            margin: 10px 0;
+            background: #333;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+        }
+
+        canvas { 
+            display: block;
+            max-width: 100%;
+        }
+
+        #tip { 
+            position: fixed; top: 10px; right: 10px; 
+            background: rgba(0,0,0,0.8); color: white; 
+            padding: 5px 12px; border-radius: 20px; 
+            z-index: 100; font-size: 12px; pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <div id="tip">Initializing...</div>
+    <div id="tip">Resuming...</div>
     <div id="viewer-container"></div>
 
     <script>
@@ -1110,52 +1138,34 @@ Books_page = """
         let pdfDoc = null;
         let saveTimeout;
 
-        // --- NEW OPTIMIZED RENDER FUNCTION ---
         async function renderPage(pageNum, canvas) {
             if (canvas.getAttribute('rendered') === 'true') return;
+            
             const page = await pdfDoc.getPage(pageNum);
-            
-            // 1. Get the original scale based on screen width
-            const unscaledViewport = page.getViewport({ scale: 1.0 });
-            const containerWidth = window.innerWidth * 0.98; 
-            const baseScale = containerWidth / unscaledViewport.width;
-            
-            // 2. Adjust for Mobile High-Density (DPR)
             const dpr = window.devicePixelRatio || 1;
-            const viewport = page.getViewport({ scale: baseScale * dpr });
-        
-            // 3. Set the CANVAS size (the actual pixels drawn)
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-        
-            // 4. Set the DISPLAY size (how big it looks on screen)
-            canvas.style.width = `${containerWidth}px`;
-            canvas.style.height = "auto";
-        
+            
+            // Match canvas drawing size to actual screen width for sharpness
+            const containerWidth = window.innerWidth;
+            const unscaledViewport = page.getViewport({ scale: 1.0 });
+            const scale = (containerWidth / unscaledViewport.width) * dpr;
+            
+            const viewport = page.getViewport({ scale: scale });
             const context = canvas.getContext('2d');
             
-            // This tells the context to scale everything up by the DPR
-            context.setTransform(dpr, 0, 0, dpr, 0, 0);
-        
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // Visual display size (CSS)
+            canvas.style.width = "100%";
+            canvas.style.height = "auto";
+
             await page.render({ 
                 canvasContext: context, 
-                viewport: page.getViewport({ scale: baseScale }) 
+                viewport: viewport 
             }).promise;
-        
-            canvas.setAttribute('rendered', 'true');
-            canvas.style.background = "white";
-        }
 
-        async function saveProgress(pageNum) {
-            clearTimeout(saveTimeout);
-            // Only save to MongoDB if the user stays on a page for 1 second
-            saveTimeout = setTimeout(() => {
-                fetch('/save-progress', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bookId: FILE_ID, page: pageNum })
-                });
-            }, 1000); 
+            canvas.setAttribute('rendered', 'true');
+            canvas.parentElement.style.background = "white";
         }
 
         async function initReader() {
@@ -1166,18 +1176,14 @@ Books_page = """
             const { page: startPage } = await progressResp.json();
 
             pdfDoc = await pdfjsLib.getDocument(PROXY_URL).promise;
-            tip.innerText = `Total Pages: ${pdfDoc.numPages}`;
-
-            // --- INTERSECTION OBSERVER ---
+            
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const pageNum = parseInt(entry.target.getAttribute('data-page'));
-                        
-                        // 1. Render content when visible
                         renderPage(pageNum, entry.target);
                         
-                        // 2. Debounced save to MongoDB
+                        // Debounced Save
                         clearTimeout(saveTimeout);
                         saveTimeout = setTimeout(() => {
                             fetch('/save-progress', {
@@ -1185,31 +1191,36 @@ Books_page = """
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ bookId: FILE_ID, page: pageNum })
                             });
-                        }, 1000); 
+                        }, 1500);
                     }
                 });
-            }, { threshold: 0.1 });
+            }, { threshold: 0.3 });
 
-            // --- CREATE PLACEHOLDERS ---
             for (let i = 1; i <= pdfDoc.numPages; i++) {
                 const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({ scale: 1.0 });
+                const unscaled = page.getViewport({ scale: 1.0 });
                 
+                // Calculate aspect ratio height to prevent "Page Jumping"
+                const ratio = unscaled.height / unscaled.width;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'page-wrapper';
+                wrapper.style.width = "100%";
+                wrapper.style.minHeight = (window.innerWidth * ratio) + "px";
+
                 const canvas = document.createElement('canvas');
-                canvas.id = `page-${i}`;
                 canvas.setAttribute('data-page', i);
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                container.appendChild(canvas);
+                
+                wrapper.appendChild(canvas);
+                container.appendChild(wrapper);
                 observer.observe(canvas);
 
-                // Immediate action for starting page
                 if (i === startPage) {
                     await renderPage(i, canvas);
-                    canvas.scrollIntoView();
+                    // Use behavior: 'auto' for precise jumping
+                    wrapper.scrollIntoView({ behavior: 'auto', block: 'start' });
                 }
             }
-            setTimeout(() => tip.style.opacity = '0', 3000);
+            setTimeout(() => tip.style.display = 'none', 2000);
         }
 
         initReader();
@@ -1217,7 +1228,6 @@ Books_page = """
 </body>
 </html>
 """
-
 # --- ROUTES ---
 
 
