@@ -1094,7 +1094,7 @@ Books_page = """
     <style>
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #1a1a1a; overflow: hidden; }
         #viewer-container { width: 100vw; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
-        canvas { margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 98%; background: #333; min-height: 500px; }
+        canvas { margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 100%; background: #333; height: auto !important; }
         #tip { position: fixed; top: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px 15px; border-radius: 20px; z-index: 100; font-size: 13px; pointer-events: none; }
     </style>
 </head>
@@ -1114,12 +1114,26 @@ Books_page = """
         async function renderPage(pageNum, canvas) {
             if (canvas.getAttribute('rendered') === 'true') return;
             const page = await pdfDoc.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1.2 }); // Balanced resolution
+            
+            // --- AUTO-FIT LOGIC ---
+            // 1. Get the original width of the PDF page
+            const unscaledViewport = page.getViewport({ scale: 1.0 });
+            
+            // 2. Calculate scale based on the user's screen width (with a tiny margin)
+            const containerWidth = window.innerWidth * 0.95; 
+            const dynamicScale = containerWidth / unscaledViewport.width;
+            
+            // 3. Apply that scale
+            const viewport = page.getViewport({ scale: dynamicScale });
+            // -----------------------
+        
             const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
             
             await page.render({ canvasContext: context, viewport: viewport }).promise;
             canvas.setAttribute('rendered', 'true');
-            canvas.style.background = "white"; // Switch from gray placeholder to white
+            canvas.style.background = "white";
         }
 
         async function saveProgress(pageNum) {
