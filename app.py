@@ -1076,8 +1076,8 @@ fetchNotes();
 
 
 # 1. MongoDB Setup
-MONGO_URI = os.environ.get("MONGO_URI")
-client = MongoClient(MONGO_URI)
+MONGO_URI1 = os.environ.get("MONGO_URI1")
+client = MongoClient(MONGO_URI1)
 db = client.get_database("LibraryDB")
 progress_col = db.reading_progress
 
