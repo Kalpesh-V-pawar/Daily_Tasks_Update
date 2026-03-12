@@ -1092,61 +1092,90 @@ Books_page = """
     <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #2c2c2c; overflow: hidden; }
-        #viewer-container { width: 100vw; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; }
-        canvas { margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 95%; background: white; }
-        #tip { position: fixed; top: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px 15px; border-radius: 20px; z-index: 100; font-size: 12px; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; background: #1a1a1a; overflow: hidden; }
+        #viewer-container { width: 100vw; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+        canvas { margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 98%; background: #333; min-height: 500px; }
+        #tip { position: fixed; top: 10px; background: rgba(0,0,0,0.8); color: white; padding: 8px 15px; border-radius: 20px; z-index: 100; font-size: 13px; pointer-events: none; }
     </style>
 </head>
 <body>
-    <div id="tip">Loading...</div>
+    <div id="tip">Initializing...</div>
     <div id="viewer-container"></div>
 
     <script>
-        // Dynamically get the file ID from the Flask template context
         const FILE_ID = "{{ file_id }}"; 
         const PROXY_URL = `/proxy-pdf/${FILE_ID}`;
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        let pdfDoc = null;
+        let saveTimeout;
+
+        // --- NEW OPTIMIZED RENDER FUNCTION ---
+        async function renderPage(pageNum, canvas) {
+            if (canvas.getAttribute('rendered') === 'true') return;
+            const page = await pdfDoc.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.2 }); // Balanced resolution
+            const context = canvas.getContext('2d');
+            
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+            canvas.setAttribute('rendered', 'true');
+            canvas.style.background = "white"; // Switch from gray placeholder to white
+        }
 
         async function initReader() {
             const container = document.getElementById('viewer-container');
             const tip = document.getElementById('tip');
 
             const progressResp = await fetch(`/get-progress/${FILE_ID}`);
-            const progressData = await progressResp.json();
-            const startPage = progressData.page || 1;
+            const { page: startPage } = await progressResp.json();
 
-            const pdf = await pdfjsLib.getDocument(PROXY_URL).promise;
-            
+            pdfDoc = await pdfjsLib.getDocument(PROXY_URL).promise;
+            tip.innerText = `Total Pages: ${pdfDoc.numPages}`;
+
+            // --- INTERSECTION OBSERVER ---
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const pageNum = parseInt(entry.target.getAttribute('data-page'));
-                        fetch('/save-progress', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ bookId: FILE_ID, page: pageNum })
-                        });
+                        
+                        // 1. Render content when visible
+                        renderPage(pageNum, entry.target);
+                        
+                        // 2. Debounced save to MongoDB
+                        clearTimeout(saveTimeout);
+                        saveTimeout = setTimeout(() => {
+                            fetch('/save-progress', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ bookId: FILE_ID, page: pageNum })
+                            });
+                        }, 1000); 
                     }
                 });
-            }, { threshold: 0.5 });
+            }, { threshold: 0.1 });
 
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 1.5 });
+            // --- CREATE PLACEHOLDERS ---
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+                const page = await pdfDoc.getPage(i);
+                const viewport = page.getViewport({ scale: 1.0 });
+                
                 const canvas = document.createElement('canvas');
-                canvas.setAttribute('data-page', i);
                 canvas.id = `page-${i}`;
+                canvas.setAttribute('data-page', i);
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
                 container.appendChild(canvas);
                 observer.observe(canvas);
-                await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
 
-                if (i === startPage) canvas.scrollIntoView();
+                // Immediate action for starting page
+                if (i === startPage) {
+                    await renderPage(i, canvas);
+                    canvas.scrollIntoView();
+                }
             }
-            tip.style.display = 'none';
+            setTimeout(() => tip.style.opacity = '0', 3000);
         }
+
         initReader();
     </script>
 </body>
