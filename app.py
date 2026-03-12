@@ -1124,10 +1124,85 @@ Books_page = """
             padding: 5px 12px; border-radius: 20px; 
             z-index: 100; font-size: 12px; pointer-events: none;
         }
+        /* The Hamburger Button */
+        #menu-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 45px;
+            height: 45px;
+            background: rgba(0, 123, 255, 0.2); /* Transparent Blue Box */
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        #menu-btn .line {
+            width: 100%;
+            height: 3px;
+            background-color: #007bff; /* Blue Lines */
+            transition: 0.3s;
+        }
+        
+        /* The Sidebar */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            right: -280px; /* Hidden by default */
+            width: 250px;
+            height: 100%;
+            background: rgba(30, 30, 30, 0.95);
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+            transition: 0.4s;
+            z-index: 999;
+            padding: 80px 15px 20px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        #sidebar.open {
+            right: 0;
+        }
+        
+        .sidebar-item {
+            padding: 12px;
+            background: #333;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #444;
+        }
+        
+        .sidebar-item:hover {
+            background: #007bff;
+        }
+
+        
     </style>
 </head>
 <body>
     <div id="tip">Resuming...</div>
+    <div id="menu-btn" onclick="toggleSidebar()">
+        <div class="line"></div>
+        <div class="line"></div>
+        <div class="line"></div>
+    </div>
+    
+    <div id="sidebar">
+        <h3 style="text-align: center;">Settings</h3>
+        <div class="sidebar-item" onclick="resetProgress()">🔄 Reset Book</div>
+        <div class="sidebar-item" onclick="toggleNightMode()">🌙 Night Mode</div>
+        <div id="page-info" style="font-size: 14px; text-align: center; color: #aaa;"></div>
+    </div>    
     <div id="viewer-container"></div>
 
     <script>
@@ -1167,6 +1242,38 @@ Books_page = """
             canvas.setAttribute('rendered', 'true');
             canvas.parentElement.style.background = "white";
         }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+        
+        function resetProgress() {
+            if(confirm("Start book from page 1?")) {
+                fetch('/save-progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bookId: FILE_ID, page: 1 })
+                }).then(() => location.reload());
+            }
+        }
+        
+        let isNightMode = false;
+        function toggleNightMode() {
+            isNightMode = !isNightMode;
+            const container = document.getElementById('viewer-container');
+            if (isNightMode) {
+                container.style.filter = "invert(90%) hue-rotate(180deg)";
+                container.style.background = "#000";
+            } else {
+                container.style.filter = "none";
+                container.style.background = "#1a1a1a";
+            }
+        }
+        
+        // Close sidebar when clicking outside
+        document.getElementById('viewer-container').onclick = function() {
+            document.getElementById('sidebar').classList.remove('open');
+        };
 
         async function initReader() {
             const container = document.getElementById('viewer-container');
