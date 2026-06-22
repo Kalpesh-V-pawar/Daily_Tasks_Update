@@ -1,6 +1,7 @@
 import sys
 import os
 import flask
+from flask import Flask, request, jsonify, render_template_string
 from pymongo import MongoClient
 from datetime import datetime
 import requests
@@ -11,9 +12,6 @@ import base64
 import json  # Add this line
 from flask import redirect, url_for
 from functools import wraps
-import os
-import requests
-from flask import Flask, request, jsonify, Response, stream_with_context, render_template_string
 
 
 
@@ -1074,340 +1072,48 @@ fetchNotes();
 </html>
 """
 
-
-# 1. MongoDB Setup
-MONGO_URI1 = os.environ.get("MONGO_URI1")
-client = MongoClient(MONGO_URI1)
-db = client.get_database("LibraryDB")
-progress_col = db.reading_progress
-
-# 2. The HTML/JS Logic
 Books_page = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html>
+    <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">    
-    <title>My Library</title>
+    <title>Login page</title>
     <link rel="icon" href="https://raw.githubusercontent.com/Kalpesh-V-pawar/Daily_Tasks_Update/main/img/kal.png" type="image/png">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <style>
-        body, html { margin: 0; padding: 0; background: #1a1a1a; }
-        
-        /* The container must allow scrolling but not interfere with zoom */
-        #viewer-container { 
-            width: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            overflow-x: hidden;
-            overflow-anchor: none; /* Prevents scroll jumping */
-        }
-
-        /* Page wrapper preserves the exact height to prevent jumping */
-        .page-wrapper {
-            margin: 10px 0;
-            background: #333;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            display: flex;
-            justify-content: center;
-        }
-
-        canvas { 
-            display: block;
-            max-width: 100%;
-        }
-
-        #tip { 
-            position: fixed; top: 10px; right: 10px; 
-            background: rgba(0,0,0,0.8); color: white; 
-            padding: 5px 12px; border-radius: 20px; 
-            z-index: 100; font-size: 12px; pointer-events: none;
-        }
-        /* The Hamburger Button */
-        #menu-btn {
-            position: fixed;
-            top: 20px;
-            left: 15px;
-            width: 30px;
-            height: 25px;
-            background: rgba(173, 216, 230, 0.2); /* Transparent Blue Box */
-            backdrop-filter: blur(5px);
-            border: 2px solid #007bff;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            align-items: center;
-            padding: 10px;
-            cursor: pointer;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-        
-        #menu-btn .line {
-            width: 100%;
-            height: 2px;
-            background-color: #007bff; /* Blue Lines */
-            transition: 0.3s;
-        }
-        
-        /* The Sidebar */
-        #sidebar {
-            position: fixed;
-            top: 0;
-            left: -280px; /* Hidden by default */
-            width: 250px;
-            height: 100%;
-            background: rgba(30, 30, 30, 0.95);
-            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
-            transition: 0.4s;
-            z-index: 999;
-            padding: 80px 15px 20px;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        #sidebar.open {
-            left: 0;
-        }
-        
-        .sidebar-item {
-            padding: 12px;
-            background: #333;
-            border-radius: 5px;
-            text-align: center;
-            cursor: pointer;
-            border: 1px solid #444;
-        }
-        
-        .sidebar-item:hover {
-            background: #007bff;
-        }
-
-        
-    </style>
-</head>
-<body>
-    <div id="tip">Resuming...</div>
-    <div id="menu-btn" onclick="toggleSidebar()">
-        <div class="line"></div>
-        <div class="line"></div>
-        <div class="line"></div>
-    </div>
+        <style>
+            /* Remove margins and padding from the body to ensure true full screen */
+            body, html {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                width: 100%;
+                overflow: hidden; /* Prevents double scrollbars */
+            }
+            
+            .pdf-container {
+                width: 100vw;   /* 100% of the browser width */
+                height: 100vh;  /* 100% of the browser height */
+                margin: 0;
+                padding: 0;
+            }
+            
+            .pdf-container iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
+        </style>    
+    </head>
+    <body>   
+    <div class="pdf-container">
+        <iframe 
+            src="https://drive.google.com/file/d/1YGHu27B-S7jvdl_iuLj30LdhbmY1E19u/preview" 
+            allow="autoplay" 
+            style="border: none;">
+        </iframe>
     
-    <div id="sidebar">
-        <h3 style="text-align: center; margin-bottom: 5px;">Settings</h3>
-        
-        <div id="page-counter" style="text-align: center; font-size: 18px; font-weight: bold; color: #007bff; margin-bottom: 20px;">
-            Page <span id="current-page">1</span> / <span id="total-pages">--</span>
-        </div>
-    
-        <div class="sidebar-item" onclick="toggleNightMode()">🌙 Night Mode</div>
-        <div class="sidebar-item" onclick="resetProgress()">🔄 Reset Book</div>
-    
-        <div style="margin-top: 20px; padding: 10px; text-align: center; border-top: 1px solid #444;">
-            <p style="font-size: 12px; color: #888; margin-bottom: 8px;">Jump to Page:</p>
-            <input type="number" id="jump-input" placeholder="No." style="width: 60px; padding: 5px; background: #333; color: white; border: 1px solid #007bff; border-radius: 4px; outline: none;">
-            <button onclick="jumpToPage()" style="padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Go</button>
-        </div>
-    </div>
-    <div id="viewer-container"></div>
-
-    <script>
-        const FILE_ID = "{{ file_id }}"; 
-        const PROXY_URL = `/proxy-pdf/${FILE_ID}`;
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        let pdfDoc = null;
-        let saveTimeout;
-
-        async function renderPage(pageNum, canvas) {
-            if (canvas.getAttribute('rendered') === 'true') return;
-            
-            const page = await pdfDoc.getPage(pageNum);
-            const dpr = window.devicePixelRatio || 1;
-            // INCREASE THIS: 2.0 is sharp, 3.0 is ultra-clear (but uses more memory)
-            const qualityMultiplier = 1.0;
-            
-            // Match canvas drawing size to actual screen width for sharpness
-            const containerWidth = window.innerWidth;
-            const unscaledViewport = page.getViewport({ scale: 1.0 });
-            const scale = (containerWidth / unscaledViewport.width) * dpr * qualityMultiplier; 
-            const viewport = page.getViewport({ scale: scale });
-            const context = canvas.getContext('2d');
-            
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
-            // Visual display size (CSS)
-            canvas.style.width = "100%";
-            canvas.style.height = "auto";
-
-            await page.render({ 
-                canvasContext: context, 
-                viewport: viewport 
-            }).promise;
-
-            canvas.setAttribute('rendered', 'true');
-            canvas.parentElement.style.background = "white";
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-        }
-        
-        // Function to update the number in the sidebar
-        function updatePageDisplay(pageNum) {
-            const el = document.getElementById('current-page');
-            if (el) el.innerText = pageNum;
-        }
-        
-        // Function to jump to a specific page
-        function jumpToPage() {
-            const input = document.getElementById('jump-input');
-            const pageNum = parseInt(input.value);
-            if (pageNum > 0 && pageNum <= pdfDoc.numPages) {
-                const target = document.querySelector(`canvas[data-page="${pageNum}"]`);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    toggleSidebar(); // Close sidebar after jumping
-                }
-            } else {
-                alert("Please enter a valid page number");
-            }
-        }
-        
-        function resetProgress() {
-            if(confirm("Start book from page 1?")) {
-                fetch('/save-progress', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bookId: FILE_ID, page: 1 })
-                }).then(() => location.reload());
-            }
-        }
-        
-        let isNightMode = false;
-        function toggleNightMode() {
-            isNightMode = !isNightMode;
-            const container = document.getElementById('viewer-container');
-            if (isNightMode) {
-                container.style.filter = "invert(90%) hue-rotate(180deg)";
-                container.style.background = "#000";
-            } else {
-                container.style.filter = "none";
-                container.style.background = "#1a1a1a";
-            }
-        }
-        
-        async function initReader() {
-            const container = document.getElementById('viewer-container');
-            const tip = document.getElementById('tip');
-
-            const progressResp = await fetch(`/get-progress/${FILE_ID}`);
-            const { page: startPage } = await progressResp.json();
-
-            pdfDoc = await pdfjsLib.getDocument(PROXY_URL).promise;
-            
-            // Set total pages in sidebar
-            const totalEl = document.getElementById('total-pages');
-            if (totalEl) totalEl.innerText = pdfDoc.numPages;
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const pageNum = parseInt(entry.target.getAttribute('data-page'));
-                        renderPage(pageNum, entry.target);
-                        updatePageDisplay(pageNum);
-                        
-                        clearTimeout(saveTimeout);
-                        saveTimeout = setTimeout(() => {
-                            fetch('/save-progress', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ bookId: FILE_ID, page: pageNum })
-                            });
-                        }, 1500);
-                    }
-                });
-            }, { threshold: 0.1 }); // Lowered threshold for better mobile detection
-
-            for (let i = 1; i <= pdfDoc.numPages; i++) {
-                const page = await pdfDoc.getPage(i);
-                const unscaled = page.getViewport({ scale: 1.0 });
-                const ratio = unscaled.height / unscaled.width;
-                
-                const wrapper = document.createElement('div');
-                wrapper.className = 'page-wrapper';
-                wrapper.style.width = "100%";
-                wrapper.style.minHeight = (window.innerWidth * ratio) + "px";
-
-                const canvas = document.createElement('canvas');
-                canvas.setAttribute('data-page', i);
-                
-                wrapper.appendChild(canvas);
-                container.appendChild(wrapper);
-                observer.observe(canvas);
-
-                if (i === startPage) {
-                    await renderPage(i, canvas);
-                    wrapper.scrollIntoView({ behavior: 'auto', block: 'start' });
-                }
-            }
-            if (tip) setTimeout(() => tip.style.display = 'none', 2000);
-        }
-
-        // --- FIXED WRAPPER ---
-        document.addEventListener('DOMContentLoaded', () => { 
-            initReader();
-
-            // Setup sidebar auto-close
-            const viewer = document.getElementById('viewer-container');
-            if (viewer) {
-                viewer.onclick = function() {
-                    const sidebar = document.getElementById('sidebar');
-                    if (sidebar) sidebar.classList.remove('open');
-                };
-            }
-        }); 
-    </script>
-</body>
+   </body>     
 </html>
 """
-# --- ROUTES ---
-
-
-@app.route("/booke")
-def booke():
-    # Example ID - You can change this or pass it as a query parameter
-    file_id = "1YGHu27B-S7jvdl_iuLj30LdhbmY1E19u"
-    return render_template_string(Books_page, file_id=file_id)
-
-@app.route('/proxy-pdf/<file_id>')
-def proxy_pdf(file_id):
-    google_url = f'https://drive.google.com/uc?id={file_id}&export=download'
-    req = requests.get(google_url, stream=True)
-    return Response(stream_with_context(req.iter_content(chunk_size=1024)),
-                    content_type='application/pdf')
-
-@app.route('/get-progress/<book_id>')
-def get_progress(book_id):
-    data = progress_col.find_one({"username": "default_reader", "bookId": book_id})
-    return jsonify({"page": data["page"]} if data else {"page": 1})
-
-@app.route('/save-progress', methods=['POST'])
-def save_progress():
-    data = request.json
-    progress_col.update_one(
-        {"username": "default_reader", "bookId": data['bookId']},
-        {"$set": {"page": data['page']}},
-        upsert=True
-    )
-    return jsonify({"status": "saved"})
-
 
 
 
@@ -1449,6 +1155,9 @@ def paisa():
 def notes():
     return Notes_page
 
+@app.route("/booke")
+def booke():
+    return render_template_string(Books_page)
 
 # API to Save Task
 @app.route('/save_task', methods=['POST'])
