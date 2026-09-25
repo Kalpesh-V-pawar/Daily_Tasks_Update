@@ -1248,7 +1248,8 @@ def save_transaction():
         }), 201
     else:
         return jsonify({
-            'message': f'{mongodb_msg}. Google Sheets error: {sheets_result.get("message", "Unknown error")}'
+            #'message': f'{mongodb_msg}. Google Sheets error: {sheets_result.get("message", "Unknown error")}'
+            'message': f'{mongodb_msg}'
         }), 201
 
 
